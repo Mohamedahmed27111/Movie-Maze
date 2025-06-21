@@ -1,5 +1,5 @@
 // pages/MovieDetailsPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import tmdbAPI from '../api/tmdbAPI';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -12,12 +12,9 @@ import {
   CalendarIcon,
   ClockIcon,
   DollarSignIcon,
-  UsersIcon,
   ArrowLeftIcon,
   ShareIcon,
-  ExternalLinkIcon,
   XIcon,
-  MapPinIcon,
   LanguagesIcon,
   TrendingUpIcon
 } from 'lucide-react';
@@ -48,11 +45,8 @@ const MovieDetailsPage = () => {
     setWatchlist(savedWatchlist);
   }, []);
 
-  useEffect(() => {
-    fetchMovieDetails();
-  }, [id]);
-
-  const fetchMovieDetails = async () => {
+  // Use useCallback to memoize the fetchMovieDetails function
+  const fetchMovieDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,7 +64,11 @@ const MovieDetailsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchMovieDetails();
+  }, [fetchMovieDetails]);
 
   const handleFavoriteClick = () => {
     const movieId = parseInt(id);
@@ -452,6 +450,15 @@ const MovieDetailsPage = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'overview' && (
+          <div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-8">Overview</h3>
+            <p className="text-text-secondary leading-relaxed text-base sm:text-lg lg:text-xl font-light">
+              {movie.overview || 'No overview available for this movie.'}
+            </p>
           </div>
         )}
       </div>

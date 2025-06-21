@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 const GenreBrowser = ({ popularMovies = [], onGenreClick }) => {

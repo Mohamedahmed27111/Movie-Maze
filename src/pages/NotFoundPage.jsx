@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Search, ArrowLeft, Film, Heart, Bookmark, Star, Play } from 'lucide-react';
+import { Home, Search, ArrowLeft, Film, Heart, Bookmark, Star } from 'lucide-react';
 
 const NotFoundPage = () => {
   const [glitchText, setGlitchText] = useState('404');

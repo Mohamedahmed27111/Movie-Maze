@@ -7,8 +7,7 @@ import ReviewsSection from '../components/home/ReviewsSection';
 import NewsletterSection from '../components/home/NewsletterSection';
 import HeroSection from '../components/home/HeroSection';
 import { 
-  Star, 
-  Plus, 
+  Star
 } from 'lucide-react';
 import tmdbAPI from '../api/tmdbAPI';
 

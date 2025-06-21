@@ -5,7 +5,6 @@ import { useMovies } from '../contexts/MovieContext';
 import MovieGrid from '../components/movie/MovieGrid';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { 
-  Filter, 
   Grid, 
   List, 
   ChevronDown, 
@@ -15,9 +14,7 @@ import {
   X,
   Search,
   Sliders,
-  Star,
-  Calendar,
-  Globe
+  
 } from 'lucide-react';
 
 const MoviesPage = () => {
@@ -43,7 +40,6 @@ const MoviesPage = () => {
 
   // Local user state (replaces Firebase auth)
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(false);
 
   const [filters, setFilters] = useState({
     category: searchParams.get('category') || 'popular',
@@ -59,7 +55,6 @@ const MoviesPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [favoriteMovies, setFavoriteMovies] = useState(new Set());
   const [watchlist, setWatchlist] = useState(new Set());
-  const [userPreferences, setUserPreferences] = useState(null);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
   const [apiError, setApiError] = useState(null);
 
@@ -111,7 +106,6 @@ const MoviesPage = () => {
       const savedPreferences = localStorage.getItem(`userPreferences_${user.id}`);
       if (savedPreferences) {
         const prefs = JSON.parse(savedPreferences);
-        setUserPreferences(prefs);
         setViewMode(prefs.viewMode || 'grid');
 
         if (!searchParams.toString()) {
@@ -188,14 +182,13 @@ const MoviesPage = () => {
   }, []);
 
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user) {
       loadUserData();
-    } else if (!user) {
-      setUserPreferences(null);
+    } else {
       setFavoriteMovies(new Set());
       setWatchlist(new Set());
     }
-  }, [user, authLoading, loadUserData]);
+  }, [user, loadUserData]);
 
   useEffect(() => {
     fetchGenres();
@@ -343,7 +336,6 @@ const MoviesPage = () => {
         defaultFilters: filters
       };
       
-      setUserPreferences(newPrefs);
       localStorage.setItem(`userPreferences_${user.id}`, JSON.stringify(newPrefs));
       
       setApiError('Preferences saved successfully!');
@@ -686,7 +678,6 @@ const MoviesPage = () => {
                 </button>
               </div>
             )}
-
             {/* Pagination */}
             {moviesMetadata?.totalPages > 1 && (
               <div className="flex items-center justify-center mt-12 gap-2">
