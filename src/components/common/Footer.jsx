@@ -1,12 +1,15 @@
 // components/common/Footer.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Github, Twitter, Mail, Film } from 'lucide-react';
+import { Heart, Github, Twitter, Mail, Film, Send } from 'lucide-react';
 
 const Footer = () => {
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = {
+const footerLinks = {
     explore: [
       { name: 'Popular Movies', path: '/movies?category=popular' },
       { name: 'Top Rated', path: '/movies?category=top-rated' },
@@ -32,6 +35,19 @@ const Footer = () => {
     { name: 'Twitter', icon: Twitter, url: 'https://twitter.com', color: 'hover:text-blue-400' },
     { name: 'Email', icon: Mail, url: 'mailto:hello@moviemaze.com', color: 'hover:text-brand-primary' },
   ];
+
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    
+    setIsSubscribing(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsSubscribing(false);
+      setEmail('');
+      // You can add success message here
+    }, 1500);
+  };
 
   return (
     <footer className="bg-surface-secondary border-t border-surface-tertiary">
@@ -133,35 +149,69 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Newsletter Signup */}
-        <div className="bg-surface-tertiary rounded-xl p-6 mb-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-4 md:mb-0">
-              <h4 className="text-text-primary font-semibold text-lg mb-1">
-                Stay Updated
-              </h4>
-              <p className="text-text-secondary text-sm">
-                Get notified about new releases and trending movies
-              </p>
-            </div>
-            <div className="flex w-full md:w-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 md:w-64 px-4 py-2 bg-surface-primary border border-surface-interactive rounded-l-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-primary transition-colors duration-200"
-              />
-              <button className="px-6 py-2 bg-brand-primary text-surface-primary font-medium rounded-r-lg hover:bg-yellow-500 transition-colors duration-200">
-                Subscribe
+        {/* Newsletter Signup - Improved Mobile Responsiveness */}
+        <div className="bg-surface-tertiary rounded-xl p-4 sm:p-6 mb-8">
+          <div className="text-center sm:text-left mb-4 sm:mb-6">
+            <h4 className="text-text-primary font-semibold text-lg mb-2">
+              Stay Updated
+            </h4>
+            <p className="text-text-secondary text-sm leading-relaxed">
+              Get notified about new releases and trending movies
+            </p>
+          </div>
+          
+          {/* Email Form - Mobile First Approach */}
+          <form onSubmit={handleEmailSubmit} className="space-y-3 sm:space-y-0">
+            {/* Mobile: Stacked Layout */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+              <div className="flex-1">
+                <label htmlFor="newsletter-email" className="sr-only">
+                  Email address
+                </label>
+                <input
+                  id="newsletter-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  className="w-full px-4 py-3 sm:py-2.5 bg-surface-primary border border-surface-interactive rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 transition-all duration-200 text-sm"
+                  required
+                  disabled={isSubscribing}
+                />
+              </div>
+              
+              <button 
+                type="submit"
+                disabled={isSubscribing || !email.trim()}
+                className="w-full sm:w-auto px-6 py-3 sm:py-2.5 bg-brand-primary text-surface-primary font-medium rounded-lg hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+              >
+                {isSubscribing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-surface-primary/30 border-t-surface-primary rounded-full animate-spin"></div>
+                    <span className="text-sm">Subscribing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span className="text-sm">Subscribe</span>
+                  </>
+                )}
               </button>
             </div>
-          </div>
+            
+            {/* Privacy Notice */}
+            <p className="text-text-muted text-xs leading-relaxed">
+              By subscribing, you agree to receive email notifications about new movies and updates. 
+              You can unsubscribe at any time.
+            </p>
+          </form>
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-surface-tertiary pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 mb-4 md:mb-0">
-              <p className="text-text-tertiary text-sm">
+        <div className="border-t border-surface-tertiary pt-6 sm:pt-8">
+          <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6">
+              <p className="text-text-tertiary text-sm text-center sm:text-left">
                 © {currentYear} Movie Maze. All rights reserved.
               </p>
               <div className="flex space-x-4">

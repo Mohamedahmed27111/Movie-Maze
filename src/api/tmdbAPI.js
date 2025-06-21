@@ -1,8 +1,7 @@
 // api/tmdbAPI.js (Updated with missing functions)
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
-const API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjOWNjY2ZjMzM5MTNkZjA1NzYwYzYxZjg0ZjEwZGE1ZiIsIm5iZiI6MTcyMzM3Nzk3My4yMTIsInN1YiI6IjY2YjhhOTM1ZDUwZDlhNjQzOTc3MGIyNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.1b2FwROPl0aX1LEnSFfZ-pbUHNWFoDsrbVaNZfLv3ng";
-
+const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 const fetchFromTMDB = async (endpoint, params = {}) => {
   const url = new URL(BASE_URL + endpoint);
   Object.entries(params).forEach(([key, value]) => {

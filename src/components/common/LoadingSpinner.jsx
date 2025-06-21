@@ -7,7 +7,8 @@ const LoadingSpinner = ({
   variant = 'default', 
   className = '', 
   text = '',
-  centered = false 
+  centered = false,
+  fullScreen = false 
 }) => {
   // Size configurations
   const sizes = {
@@ -98,16 +99,9 @@ const LoadingSpinner = ({
     }
   };
 
-  // Container classes
-  const containerClasses = [
-    'flex items-center',
-    currentSize.container,
-    centered ? 'justify-center' : '',
-    className
-  ].filter(Boolean).join(' ');
-
-  return (
-    <div className={containerClasses}>
+  // Spinner content
+  const spinnerContent = (
+    <div className={`flex items-center ${currentSize.container} ${centered ? 'justify-center' : ''}`}>
       <SpinnerIcon type={variant === 'film' ? 'film' : variant === 'dots' ? 'dots' : 'default'} />
       {text && (
         <span className={`${currentSize.text} ${currentVariant.text} font-medium`}>
@@ -116,11 +110,37 @@ const LoadingSpinner = ({
       )}
     </div>
   );
+
+  // If fullScreen is true, wrap in a full-screen centered container
+  if (fullScreen) {
+    return (
+      <div className={`fixed inset-0 flex items-center justify-center bg-surface-primary bg-opacity-75 z-modal ${className}`}>
+        {spinnerContent}
+      </div>
+    );
+  }
+
+  // If centered is true, wrap in a centered container
+ if (centered) {
+  return (
+    <div className={`flex justify-center items-center w-full h-full ${className}`}>
+      {spinnerContent}
+    </div>
+  );
+}
+
+  // Default inline spinner
+  return (
+    <div className={className}>
+      {spinnerContent}
+    </div>
+  );
 };
 
 // Specialized loading components
-export const PageLoader = ({ text = 'Loading...' }) => (
-  <div className="flex items-center justify-center min-h-[400px]">
+
+export const PageLoader = ({ text = 'Loading...', className = '' }) => (
+  <div className={`flex items-center justify-center text-center min-h-[400px] ${className}`}>
     <div className="text-center">
       <LoadingSpinner size="xl" variant="primary" />
       <p className="mt-4 text-text-secondary">{text}</p>
@@ -128,12 +148,22 @@ export const PageLoader = ({ text = 'Loading...' }) => (
   </div>
 );
 
-export const InlineLoader = ({ text = 'Loading...' }) => (
-  <LoadingSpinner size="sm" text={text} className="justify-center py-4" />
+export const InlineLoader = ({ text = 'Loading...', className = '' }) => (
+  <div className={`flex justify-center items-center py-4 ${className}`}>
+    <LoadingSpinner size="sm" text={text} />
+  </div>
 );
 
 export const ButtonLoader = ({ size = 'sm' }) => (
   <LoadingSpinner size={size} variant="white" />
+);
+
+export const FullScreenLoader = ({ text = 'Loading...', className = '' }) => (
+  <LoadingSpinner size="xl" variant="primary" text={text} fullScreen className={className} />
+);
+
+export const CenteredLoader = ({ size = 'md', text = '', className = '' }) => (
+  <LoadingSpinner size={size} text={text} centered className={className} />
 );
 
 export const CardLoader = () => (
@@ -148,7 +178,7 @@ export const CardLoader = () => (
 
 export const MovieGridLoader = ({ count = 12 }) => (
   <div className="grid grid-movies-mobile md:grid-movies-tablet lg:grid-movies-desktop gap-6">
-    {Array.from({ length: count }, (_, i) => (
+    {Array.from({ length: count },  (_, i) => (
       <CardLoader key={i} />
     ))}
   </div>
