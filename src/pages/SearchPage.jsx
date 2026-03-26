@@ -57,7 +57,8 @@ const SearchPage = () => {
     if (error) {
       clearError();
     }
-  }, [error, clearError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Search or discover movies
   const searchMoviesFn = useCallback(async (query, page = 1, filters = {}) => {
@@ -185,19 +186,19 @@ const SearchPage = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Search Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold mb-6 text-text-primary">
           {searchQuery ? `Search Results for "${searchQuery}"` : 'Discover Movies'}
         </h1>
         
         {/* Search Bar */}
         <div className="relative mb-4">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-muted w-5 h-5" />
           <input
             type="text"
             placeholder="Search for movies..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+            className="w-full pl-12 pr-4 py-3.5 bg-surface-secondary border border-surface-tertiary/60 rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-primary/70 focus:ring-2 focus:ring-brand-primary/15 transition-all shadow-sm hover:border-surface-interactive"
           />
         </div>
 
@@ -205,12 +206,12 @@ const SearchPage = () => {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:border-blue-500 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-surface-tertiary rounded-lg text-text-secondary hover:text-text-primary hover:border-brand-primary transition-colors"
           >
             <Filter className="w-4 h-4" />
             Filters
             {hasActiveFilters && (
-              <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+              <span className="bg-brand-primary text-surface-primary text-xs px-2 py-1 rounded-full font-medium">
                 {activeFilterCount}
               </span>
             )}
@@ -221,7 +222,7 @@ const SearchPage = () => {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-text-tertiary hover:text-text-secondary transition-colors"
               >
                 <X className="w-4 h-4" />
                 Clear Filters
@@ -230,7 +231,7 @@ const SearchPage = () => {
 
             {/* Results count */}
             {totalResults > 0 && (
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-text-tertiary">
                 {totalResults.toLocaleString()} results
               </span>
             )}
@@ -240,17 +241,17 @@ const SearchPage = () => {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="mb-8 p-6 bg-surface-secondary/60 backdrop-blur-sm rounded-2xl border border-surface-tertiary/50 shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Sort By */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 Sort By
               </label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-surface-tertiary border border-surface-interactive rounded-md text-text-primary focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary"
               >
                 <option value="popularity.desc">Most Popular</option>
                 <option value="popularity.asc">Least Popular</option>
@@ -265,13 +266,13 @@ const SearchPage = () => {
 
             {/* Min Rating */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 Minimum Rating
               </label>
               <select
                 value={minRating}
                 onChange={(e) => setMinRating(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-surface-tertiary border border-surface-interactive rounded-md text-text-primary focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary"
               >
                 <option value="">Any Rating</option>
                 <option value="9">9+ Excellent</option>
@@ -284,13 +285,13 @@ const SearchPage = () => {
 
             {/* Release Year */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 Release Year
               </label>
               <select
                 value={releaseYear}
                 onChange={(e) => setReleaseYear(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-surface-tertiary border border-surface-interactive rounded-md text-text-primary focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary"
               >
                 <option value="">Any Year</option>
                 {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(year => (
@@ -303,7 +304,7 @@ const SearchPage = () => {
           {/* Genres */}
           {genres.length > 0 && (
             <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <label className="block text-sm font-medium text-text-secondary mb-3">
                 Genres ({selectedGenres.length} selected)
               </label>
               <div className="flex flex-wrap gap-2">
@@ -313,8 +314,8 @@ const SearchPage = () => {
                     onClick={() => toggleGenre(genre.id)}
                     className={`px-3 py-1 rounded-full text-sm border transition-colors ${
                       selectedGenres.includes(genre.id)
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-blue-500 hover:text-blue-500'
+                        ? 'bg-brand-primary text-surface-primary border-brand-primary'
+                        : 'bg-surface-tertiary border-surface-interactive text-text-secondary hover:border-brand-primary hover:text-brand-primary'
                     }`}
                   >
                     {genre.name}
@@ -330,10 +331,10 @@ const SearchPage = () => {
       {displayError && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-red-600 dark:text-red-400 mb-2">
+          <h2 className="text-xl font-semibold text-error mb-2">
             Something went wrong
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{displayError}</p>
+          <p className="text-text-secondary mb-4">{displayError}</p>
           <button
             onClick={() => {
               setLocalError(null);
@@ -345,7 +346,7 @@ const SearchPage = () => {
                 releaseYear
               });
             }}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-brand-primary text-surface-primary rounded-lg hover:bg-yellow-500 transition-colors"
           >
             Try Again
           </button>
@@ -356,10 +357,10 @@ const SearchPage = () => {
       {!displayError && !isLoading && movies.length === 0 && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🎬</div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
             {searchQuery ? 'No movies found' : 'Start discovering movies'}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-text-secondary">
             {searchQuery 
               ? 'Try adjusting your search terms or filters'
               : 'Use the search bar above or apply filters to find movies'
@@ -379,7 +380,7 @@ const SearchPage = () => {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoading}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-brand-primary text-surface-primary rounded-lg hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Loading...' : `Load More Movies (${currentPage}/${totalPages})`}
               </button>

@@ -10,8 +10,7 @@ import {
   Home,
   Grid3X3,
   Clock,
-  TrendingUp,
-  Loader2
+  TrendingUp
 } from 'lucide-react';
 
 const Header = () => {
@@ -159,7 +158,7 @@ const Header = () => {
   );
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-surface-primary/95 backdrop-blur-xl border-b border-surface-tertiary/50">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-surface-primary/90 backdrop-blur-2xl border-b border-surface-tertiary/40 shadow-[0_1px_0_0_rgba(250,204,21,0.06)]">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -173,14 +172,16 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <NavLink to="/" className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-surface-secondary/50 transition-all duration-200">
+          <nav className="hidden md:flex items-center space-x-2">
+            <NavLink to="/" className="flex items-center space-x-2 px-4 py-2 rounded-xl hover:bg-surface-secondary/60 transition-all duration-200 relative group">
               <Home className="w-4 h-4" />
-              <span>Home</span>
+              <span className="font-medium">Home</span>
+              {isActivePath('/') && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-brand-primary rounded-full" />}
             </NavLink>
-            <NavLink to="/movies" className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-surface-secondary/50 transition-all duration-200">
+            <NavLink to="/movies" className="flex items-center space-x-2 px-4 py-2 rounded-xl hover:bg-surface-secondary/60 transition-all duration-200 relative">
               <Grid3X3 className="w-4 h-4" />
-              <span>Movies</span>
+              <span className="font-medium">Movies</span>
+              {isActivePath('/movies') && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-brand-primary rounded-full" />}
             </NavLink>
           </nav>
 
@@ -190,7 +191,10 @@ const Header = () => {
               <div className="relative group">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-tertiary group-focus-within:text-brand-primary transition-colors duration-200" />
                 {isSearching && (
-                  <Loader2 className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-primary animate-spin" />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4">
+                    <div className="absolute inset-0 rounded-full border-2 border-surface-tertiary" />
+                    <div className="absolute inset-0 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
+                  </div>
                 )}
                 <input
                   type="text"
@@ -198,10 +202,10 @@ const Header = () => {
                   value={searchQuery}
                   onChange={handleSearchChange}
                   onFocus={() => setShowSearchDropdown(true)}
-                  className="w-full pl-12 pr-12 py-3 bg-surface-secondary/80 border border-surface-tertiary/50 rounded-xl 
-                           text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-primary 
-                           focus:ring-2 focus:ring-brand-primary/20 focus:bg-surface-secondary transition-all duration-200
-                           backdrop-blur-sm shadow-sm hover:shadow-md"
+                  className="w-full pl-12 pr-12 py-2.5 bg-surface-secondary/70 border border-surface-tertiary/60 rounded-xl 
+                           text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-primary/70 
+                           focus:ring-2 focus:ring-brand-primary/15 focus:bg-surface-secondary transition-all duration-200
+                           backdrop-blur-sm shadow-sm hover:border-surface-interactive"
                 />
               </div>
             </form>
@@ -217,9 +221,15 @@ const Header = () => {
                 {searchQuery.length >= 2 && (
                   <div className="p-2">
                     {isSearching ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 text-brand-primary animate-spin" />
-                        <span className="ml-2 text-text-secondary">Searching...</span>
+                      <div className="flex items-center justify-center py-8 gap-3">
+                        <div className="relative w-6 h-6">
+                          <div className="absolute inset-0 rounded-full border-2 border-surface-tertiary" />
+                          <div className="absolute inset-0 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                          </div>
+                        </div>
+                        <span className="text-text-secondary">Searching...</span>
                       </div>
                     ) : searchResults.length > 0 ? (
                       <>

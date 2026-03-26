@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import tmdbAPI from '../api/tmdbAPI';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import { MovieDetailsLoader } from '../components/common/LoadingSpinner';
 import MovieGrid from '../components/movie/MovieGrid';
 import { 
   HeartIcon, 
@@ -130,9 +130,7 @@ const MovieDetailsPage = () => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-96">
-          <LoadingSpinner size="lg" />
-        </div>
+        <MovieDetailsLoader />
       </div>
     );
   }
@@ -489,6 +487,7 @@ const MovieDetailsPage = () => {
                 src={tmdbAPI.getYouTubeEmbedUrl(trailer.key)}
                 title={trailer.name}
                 className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             </div>

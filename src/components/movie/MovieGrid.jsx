@@ -13,12 +13,12 @@ const MovieGrid = ({
   // Loading skeleton
   if (loading) {
     return (
-      <div className={`grid gap-6 ${
-        viewMode === 'list' 
-          ? 'grid-cols-1' 
-          : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+      <div className={`grid gap-5 ${
+        viewMode === 'list'
+          ? 'grid-cols-1'
+          : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
       }`}>
-        {Array.from({ length: 12 }).map((_, index) => (
+        {Array.from({ length: 8 }).map((_, index) => (
           <MovieGridSkeleton key={index} viewMode={viewMode} />
         ))}
       </div>
@@ -43,10 +43,10 @@ const MovieGrid = ({
   }
 
   return (
-    <div className={`grid gap-6 ${
-      viewMode === 'list' 
-        ? 'grid-cols-1' 
-        : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+    <div className={`grid gap-5 ${
+      viewMode === 'list'
+        ? 'grid-cols-1'
+        : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
     }`}>
       {movies.map((movie) => (
         <MovieCard 
@@ -85,19 +85,13 @@ const MovieGridSkeleton = ({ viewMode }) => {
     );
   }
 
-  // Grid skeleton
+  // Grid skeleton with shimmer
   return (
-    <div className="bg-surface-secondary rounded-lg overflow-hidden border border-surface-tertiary animate-pulse">
-      {/* Poster skeleton */}
-      <div className="aspect-poster bg-surface-tertiary"></div>
-      
-      {/* Content skeleton */}
-      <div className="p-4 space-y-3">
-        <div className="h-5 bg-surface-tertiary rounded w-full"></div>
-        <div className="flex items-center justify-between">
-          <div className="h-4 bg-surface-tertiary rounded w-16"></div>
-          <div className="h-4 bg-surface-tertiary rounded w-12"></div>
-        </div>
+    <div className="rounded-xl overflow-hidden">
+      <div className="skeleton-shimmer rounded-xl mb-3" style={{ aspectRatio: '2/3' }} />
+      <div className="space-y-2 px-1">
+        <div className="skeleton-shimmer h-4 rounded-md" style={{ width: '75%' }} />
+        <div className="skeleton-shimmer h-3 rounded-md" style={{ width: '45%' }} />
       </div>
     </div>
   );

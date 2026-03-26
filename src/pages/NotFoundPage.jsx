@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Home, Search, ArrowLeft, Film, Heart, Bookmark, Star } from 'lucide-react';
 
 const NotFoundPage = () => {
@@ -43,7 +44,7 @@ const NotFoundPage = () => {
   const randomFact = movieFacts[Math.floor(Math.random() * movieFacts.length)];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-[calc(100vh-4rem)] bg-surface-primary flex items-center justify-center px-4 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-2 h-2 bg-yellow-400 rounded-full animate-pulse opacity-60"></div>
@@ -77,13 +78,13 @@ const NotFoundPage = () => {
 
           {/* Error Message */}
           <div className="mb-10">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-text-primary to-text-secondary bg-clip-text text-transparent mb-6">
               Scene Not Found
             </h1>
-            <p className="text-xl md:text-2xl text-slate-300 mb-4 font-light">
+            <p className="text-xl md:text-2xl text-text-secondary mb-4 font-light">
               This page seems to have been left on the cutting room floor
             </p>
-            <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-text-tertiary max-w-2xl mx-auto leading-relaxed">
               The page you're looking for might have been moved, deleted, or perhaps it never existed in the first place. 
               Don't worry though – every great story has its plot twists!
             </p>
@@ -92,29 +93,29 @@ const NotFoundPage = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-          <button
-            onClick={() => window.location.href = '/'}
+          <Link
+            to="/"
             className="group flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900 rounded-xl hover:from-yellow-300 hover:to-yellow-400 transition-all duration-300 font-semibold transform hover:scale-105 shadow-lg hover:shadow-yellow-400/25"
           >
             <Home className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
             <span>Back to Home</span>
-          </button>
+          </Link>
 
           <button
             onClick={handleGoBack}
-            className="group flex items-center space-x-3 px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all duration-300 font-semibold transform hover:scale-105 shadow-lg border border-slate-600"
+            className="group flex items-center space-x-3 px-8 py-4 bg-surface-tertiary hover:bg-surface-interactive text-text-primary rounded-xl transition-all duration-300 font-semibold transform hover:scale-105 shadow-lg border border-surface-interactive"
           >
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
             <span>Go Back</span>
           </button>
 
-          <button
-            onClick={() => window.location.href = '/search'}
+          <Link
+            to="/search"
             className="group flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-xl hover:from-rose-400 hover:to-rose-500 transition-all duration-300 font-semibold transform hover:scale-105 shadow-lg hover:shadow-rose-500/25"
           >
             <Search className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
             <span>Search Movies</span>
-          </button>
+          </Link>
         </div>
 
         {/* Quick Links Grid */}
@@ -124,43 +125,43 @@ const NotFoundPage = () => {
           </h2>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="group p-6 bg-slate-800/50 backdrop-blur-sm rounded-2xl hover:bg-slate-700/50 transition-all duration-300 cursor-pointer border border-slate-700/50 hover:border-slate-600 transform hover:scale-105">
+            <Link to="/movies" className="group p-6 bg-surface-secondary/50 backdrop-blur-sm rounded-2xl hover:bg-surface-tertiary/60 transition-all duration-300 border border-surface-tertiary/50 hover:border-surface-interactive transform hover:scale-105">
               <div className="text-yellow-400 mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Film className="w-8 h-8 mx-auto" />
               </div>
               <div className="text-white font-semibold mb-2">All Movies</div>
-              <div className="text-slate-400 text-sm">Browse our catalog</div>
-            </div>
+              <div className="text-text-muted text-sm">Browse our catalog</div>
+            </Link>
 
-            <div className="group p-6 bg-slate-800/50 backdrop-blur-sm rounded-2xl hover:bg-slate-700/50 transition-all duration-300 cursor-pointer border border-slate-700/50 hover:border-slate-600 transform hover:scale-105">
+            <Link to="/search" className="group p-6 bg-surface-secondary/50 backdrop-blur-sm rounded-2xl hover:bg-surface-tertiary/60 transition-all duration-300 border border-surface-tertiary/50 hover:border-surface-interactive transform hover:scale-105">
               <div className="text-blue-400 mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Search className="w-8 h-8 mx-auto" />
               </div>
               <div className="text-white font-semibold mb-2">Search</div>
-              <div className="text-slate-400 text-sm">Find your movie</div>
-            </div>
+              <div className="text-text-muted text-sm">Find your movie</div>
+            </Link>
 
-            <div className="group p-6 bg-slate-800/50 backdrop-blur-sm rounded-2xl hover:bg-slate-700/50 transition-all duration-300 cursor-pointer border border-slate-700/50 hover:border-slate-600 transform hover:scale-105">
+            <Link to="/movies?category=top_rated" className="group p-6 bg-surface-secondary/50 backdrop-blur-sm rounded-2xl hover:bg-surface-tertiary/60 transition-all duration-300 border border-surface-tertiary/50 hover:border-surface-interactive transform hover:scale-105">
               <div className="text-rose-400 mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Heart className="w-8 h-8 mx-auto fill-current" />
               </div>
-              <div className="text-white font-semibold mb-2">Favorites</div>
-              <div className="text-slate-400 text-sm">Your top picks</div>
-            </div>
+              <div className="text-white font-semibold mb-2">Top Rated</div>
+              <div className="text-text-muted text-sm">Best of the best</div>
+            </Link>
 
-            <div className="group p-6 bg-slate-800/50 backdrop-blur-sm rounded-2xl hover:bg-slate-700/50 transition-all duration-300 cursor-pointer border border-slate-700/50 hover:border-slate-600 transform hover:scale-105">
+            <Link to="/movies?category=trending" className="group p-6 bg-surface-secondary/50 backdrop-blur-sm rounded-2xl hover:bg-surface-tertiary/60 transition-all duration-300 border border-surface-tertiary/50 hover:border-surface-interactive transform hover:scale-105">
               <div className="text-green-400 mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Bookmark className="w-8 h-8 mx-auto" />
               </div>
-              <div className="text-white font-semibold mb-2">Watchlist</div>
-              <div className="text-slate-400 text-sm">Coming up next</div>
-            </div>
+              <div className="text-white font-semibold mb-2">Trending</div>
+              <div className="text-text-muted text-sm">What's hot now</div>
+            </Link>
           </div>
         </div>
 
         {/* Easter Egg Section */}
         <div 
-          className="relative p-8 bg-gradient-to-r from-slate-800/50 to-slate-700/50 backdrop-blur-sm rounded-3xl border border-slate-600/50 cursor-pointer hover:border-yellow-400/50 transition-all duration-500 group"
+          className="relative p-8 bg-surface-secondary/50 backdrop-blur-sm rounded-3xl border border-surface-tertiary/50 cursor-pointer hover:border-brand-primary/40 transition-all duration-500 group"
           onClick={() => setShowEasterEgg(!showEasterEgg)}
         >
           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -168,10 +169,10 @@ const NotFoundPage = () => {
           </div>
           
           <div className="text-6xl mb-4 animate-bounce">🎬</div>
-          <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-yellow-400 transition-colors">
+          <h3 className="text-2xl font-bold text-text-primary mb-4 group-hover:text-brand-primary transition-colors">
             {showEasterEgg ? "🎉 You found the secret!" : "Movie Trivia"}
           </h3>
-          <p className="text-slate-300 leading-relaxed max-w-3xl mx-auto">
+          <p className="text-text-secondary leading-relaxed max-w-3xl mx-auto">
             {showEasterEgg 
               ? "Congratulations! You've discovered our hidden easter egg. In the spirit of movies, here's a bonus fact: The Wilhelm Scream, a famous stock scream effect, has been used in over 400 films since 1951!"
               : randomFact
@@ -179,14 +180,14 @@ const NotFoundPage = () => {
           </p>
           
           {!showEasterEgg && (
-            <div className="mt-4 text-sm text-slate-500 group-hover:text-slate-400 transition-colors">
+            <div className="mt-4 text-sm text-text-muted group-hover:text-text-tertiary transition-colors">
               Click for a surprise! 🎭
             </div>
           )}
         </div>
 
         {/* Footer Message */}
-        <div className="mt-12 text-slate-500 text-sm font-light py-7">
+        <div className="mt-12 text-text-muted text-sm font-light py-7">
           "Even the greatest filmmakers know that not every scene makes it to the final cut."
         </div>
       </div>

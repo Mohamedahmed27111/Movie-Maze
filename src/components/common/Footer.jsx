@@ -18,15 +18,13 @@ const footerLinks = {
     ],
     discover: [
       { name: 'Search Movies', path: '/search' },
-      { name: 'Browse by Genre', path: '/movies?view=genres' },
+      { name: 'Browse by Genre', path: '/movies' },
       { name: 'Trending', path: '/movies?category=trending' },
-      { name: 'Random Movie', path: '/movies/random' },
+      { name: 'Now Playing', path: '/movies?category=now-playing' },
     ],
     support: [
-      { name: 'Help Center', path: '/help' },
-      { name: 'Contact Us', path: '/contact' },
-      { name: 'Privacy Policy', path: '/privacy' },
-      { name: 'Terms of Service', path: '/terms' },
+      { name: 'About', path: '/' },
+      { name: 'Contact Us', path: 'mailto:hello@moviemaze.com', external: true },
     ],
   };
 
@@ -50,7 +48,9 @@ const footerLinks = {
   };
 
   return (
-    <footer className="bg-surface-secondary border-t border-surface-tertiary">
+    <footer className="relative bg-surface-secondary border-t border-surface-tertiary/50">
+      {/* Gradient accent line at very top */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-primary/40 to-transparent" />
       <div className="container mx-auto px-4 py-12">
         {/* Main Footer Content */}
         <div className="mb-8">
@@ -75,17 +75,17 @@ const footerLinks = {
             </p>
             
             {/* Social Links */}
-            <div className="flex space-x-4">
+            <div className="flex space-x-3">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`p-2 bg-surface-tertiary rounded-lg text-text-tertiary transition-all duration-200 ${social.color} hover:scale-110 hover:shadow-lg`}
+                  className={`p-2.5 bg-surface-primary/60 rounded-xl text-text-tertiary border border-surface-tertiary/50 transition-all duration-200 ${social.color} hover:scale-110 hover:border-brand-primary/30 hover:shadow-lg`}
                   aria-label={social.name}
                 >
-                  <social.icon className="w-5 h-5" />
+                  <social.icon className="w-4 h-4" />
                 </a>
               ))}
             </div>
@@ -136,12 +136,21 @@ const footerLinks = {
               <ul className="space-y-2.5">
                 {footerLinks.support.map((link) => (
                   <li key={link.name}>
-                    <Link
-                      to={link.path}
-                      className="text-text-secondary hover:text-brand-primary transition-colors duration-200 text-sm block py-1"
-                    >
-                      {link.name}
-                    </Link>
+                    {link.external ? (
+                      <a
+                        href={link.path}
+                        className="text-text-secondary hover:text-brand-primary transition-colors duration-200 text-sm block py-1"
+                      >
+                        {link.name}
+                      </a>
+                    ) : (
+                      <Link
+                        to={link.path}
+                        className="text-text-secondary hover:text-brand-primary transition-colors duration-200 text-sm block py-1"
+                      >
+                        {link.name}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -149,8 +158,10 @@ const footerLinks = {
           </div>
         </div>
 
-        {/* Newsletter Signup - Improved Mobile Responsiveness */}
-        <div className="bg-surface-tertiary rounded-xl p-4 sm:p-6 mb-8">
+        {/* Newsletter Signup */}
+        <div className="bg-surface-primary/40 border border-surface-tertiary/50 rounded-2xl p-4 sm:p-6 mb-8 relative overflow-hidden">
+          {/* Subtle gradient glow */}
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/3 to-transparent pointer-events-none rounded-2xl" />
           <div className="text-center sm:text-left mb-4 sm:mb-6">
             <h4 className="text-text-primary font-semibold text-lg mb-2">
               Stay Updated
@@ -214,20 +225,6 @@ const footerLinks = {
               <p className="text-text-tertiary text-sm text-center sm:text-left">
                 © {currentYear} Movie Maze. All rights reserved.
               </p>
-              <div className="flex space-x-4">
-                <Link
-                  to="/privacy"
-                  className="text-text-tertiary hover:text-text-secondary text-sm transition-colors duration-200"
-                >
-                  Privacy Policy
-                </Link>
-                <Link
-                  to="/terms"
-                  className="text-text-tertiary hover:text-text-secondary text-sm transition-colors duration-200"
-                >
-                  Terms of Service
-                </Link>
-              </div>
             </div>
             
             <div className="flex items-center space-x-1 text-text-tertiary text-sm">

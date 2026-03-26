@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   Play, 
   Star, 
@@ -8,6 +8,31 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+// ── Pure utility helpers ─────────────────────────────────────────────────────────────────
+// Defined outside the component so they are never recreated on re-render.
+const formatYear = (dateString) => {
+  if (!dateString) return '';
+  return new Date(dateString).getFullYear();
+};
+
+const formatRuntime = (minutes) => {
+  if (!minutes) return '';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+};
+
+const getImageUrl = (path, size = 'original') => {
+  if (!path) return null;
+  return path.startsWith('http') ? path : `https://image.tmdb.org/t/p/${size}${path}`;
+};
+
+const getPosterUrl = (path) => {
+  if (!path) return null;
+  return path.startsWith('http') ? path : `https://image.tmdb.org/t/p/w300${path}`;
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
 const HeroSection = ({ movies = [], onWatchNow, onNavigate }) => {
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -49,16 +74,16 @@ useEffect(() => {
     }, 400);
   };
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     setIsPaused(true);
     if (autoRotateRef.current) {
       clearInterval(autoRotateRef.current);
     }
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setIsPaused(false);
-  };
+  }, []);
 
   // Enhanced scroll with looping logic
   const scrollCarousel = (direction) => {
@@ -93,36 +118,17 @@ useEffect(() => {
     });
   };
 
-  const formatYear = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).getFullYear();
-  };
-
-  const formatRuntime = (minutes) => {
-    if (!minutes) return '';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-  };
-
-  const getImageUrl = (path, size = 'original') => {
-    if (!path) return null;
-    return path.startsWith('http') ? path : `https://image.tmdb.org/t/p/${size}${path}`;
-  };
-
-  const getPosterUrl = (path) => {
-    if (!path) return null;
-    return path.startsWith('http') ? path : `https://image.tmdb.org/t/p/w300${path}`;
-  };
-
-  const currentMovie = movies[currentMovieIndex] || {};
+  const currentMovie = useMemo(
+    () => movies[currentMovieIndex] || {},
+    [movies, currentMovieIndex]
+  );
 
   if (movies.length === 0) {
     return (
-      <div className="relative h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center">
+      <div className="relative h-screen overflow-hidden bg-surface-primary flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="text-white/60 text-xl">No movies available</div>
-          <div className="text-white/40 text-sm">Please load some movies to display</div>
+          <div className="text-text-tertiary text-xl">No movies available</div>
+          <div className="text-text-muted text-sm">Please load some movies to display</div>
         </div>
       </div>
     );
@@ -130,7 +136,7 @@ useEffect(() => {
 
   return (
     <div 
-      className="relative h-screen overflow-hidden bg-black"
+      className="relative h-screen flex flex-col overflow-hidden bg-black"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -145,6 +151,8 @@ useEffect(() => {
             <img
               src={getImageUrl(currentMovie.backdrop_path)}
               alt={currentMovie.title || 'Movie backdrop'}
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-1000 ease-out"
             />
           )}
@@ -156,17 +164,17 @@ useEffect(() => {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/95"></div>
       </div>
 
-      {/* Hero Content */}
-      <div className="relative z-10 flex items-center justify-center h-full px-4 sm:px-6 lg:px-8 pb-24 sm:pb-32">
+      {/* Hero Content — flex-1 so it fills all space above the carousel */}
+      <div className="relative z-10 flex-1 flex items-center justify-center min-h-0 px-4 sm:px-6 lg:px-8 py-8">
         <div className="container mx-auto max-w-7xl">
-          <div className="text-center my-12 space-y-4 sm:space-y-6">
+          <div className="text-center space-y-4 sm:space-y-5">
             {/* Movie Title */}
             <div 
               className={`transition-all duration-700 ease-out ${
                 isTransitioning ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'
               }`}
             >
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-tight mb-2 sm:mb-4 px-2">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-black text-white leading-tight mb-2 sm:mb-3 px-2">
                 {currentMovie.title || 'Movie Title'}
               </h1>
               {currentMovie.tagline && (
@@ -207,27 +215,27 @@ useEffect(() => {
                   <span>{formatRuntime(currentMovie.runtime)}</span>
                 </div>
               )}
-              
-              {currentMovie.genres?.[0]?.name && (
-                <div className="text-xs sm:text-sm bg-white/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/20">
-                  {currentMovie.genres[0].name}
-                </div>
-              )}
             </div>
 
-            {/* Movie Description */}
-            {currentMovie.overview && (
-              <div 
-                className={`max-w-xs sm:max-w-lg md:max-w-2xl mx-auto transition-all duration-700 delay-300 mb-6 sm:mb-8 px-4 ${
-                  isTransitioning ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'
+            {/* Genre Pills */}
+            {currentMovie.genres?.length > 0 && (
+              <div
+                className={`flex flex-wrap items-center justify-center gap-2 px-4 transition-all duration-700 delay-300 ${
+                  isTransitioning ? 'opacity-0 translate-y-6' : 'opacity-100 translate-y-0'
                 }`}
               >
-                <p className="text-white/90 leading-relaxed text-sm sm:text-base line-clamp-2 sm:line-clamp-3">
-                  {currentMovie.overview}
-                </p>
-                <button className="text-yellow-400 hover:text-yellow-300 mt-2 font-medium text-xs sm:text-sm hidden sm:block">
-                  Read more
-                </button>
+                {currentMovie.genres.map((genre) => (
+                  <span
+                    key={genre.id}
+                    className="text-xs sm:text-sm font-medium px-3 py-1 rounded-full
+                               border border-white/20 bg-white/5 text-white/80
+                               backdrop-blur-sm
+                               hover:border-yellow-400/60 hover:text-yellow-300 hover:bg-yellow-400/10
+                               transition-all duration-200 cursor-default select-none"
+                  >
+                    {genre.name}
+                  </span>
+                ))}
               </div>
             )}
 
@@ -244,21 +252,14 @@ useEffect(() => {
                 <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
                 Watch now
               </button>
-              
-              <button 
-                onClick={() => onNavigate?.(`/movie/${currentMovie.id}`)}
-                className="border-2 border-white/30 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-base sm:text-lg hover:border-yellow-400 hover:bg-white/10 transition-all duration-200 shadow-xl"
-              >
-                Watch trailer
-              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Custom Carousel at Bottom */}
+      {/* Carousel — in-flow at bottom, no absolute so it never overlaps content */}
       {movies.length > 1 && (
-        <div className="absolute bottom-0 left-0 right-0 z-20 pb-6">
+        <div className="relative z-20 flex-shrink-0 pb-5">
           <div className="relative">
             {/* Navigation Buttons */}
             <button
@@ -288,28 +289,40 @@ useEffect(() => {
               {movies.map((movie, index) => (
                 <div
                   key={`${movie.id}-${index}`}
-                  className={`flex-shrink-0 cursor-pointer transition-all duration-500 group ${
+                  className={`flex-shrink-0 cursor-pointer transition-all duration-300 group ${
                     index === currentMovieIndex 
-                      ? 'scale-110 shadow-2xl' 
-                      : 'hover:scale-105 opacity-70 hover:opacity-100'
+                      ? '' 
+                      : 'opacity-70 hover:opacity-100'
                   }`}
                   onClick={() => handleMovieChange(index)}
                   onMouseEnter={() => setHoveredMovieIndex(index)}
                   onMouseLeave={() => setHoveredMovieIndex(null)}
                   style={{
                     width: hoveredMovieIndex === index ? '180px' : '130px',
-                    transition: 'width 0.3s ease'
+                    transition: 'width 0.3s ease, opacity 0.3s ease'
                   }}
                 >
-                  <div className="relative overflow-hidden rounded-lg bg-gradient-to-b from-gray-800 to-gray-900 shadow-xl border border-white/10">
+                  <div
+                    className="relative overflow-hidden rounded-lg bg-gray-900 shadow-xl transition-all duration-300"
+                    style={{
+                      height: '180px',
+                      border: hoveredMovieIndex === index
+                        ? '2px solid #FACC15'
+                        : index === currentMovieIndex
+                        ? '2px solid rgba(250,204,21,0.5)'
+                        : '2px solid rgba(255,255,255,0.1)'
+                    }}
+                  >
                     {getPosterUrl(movie.poster_path) ? (
                       <img
                         src={getPosterUrl(movie.poster_path)}
                         alt={movie.title || 'Movie poster'}
-                        className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110"
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover transition-none"
                       />
                     ) : (
-                      <div className="w-full h-40 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                      <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
                         <div className="text-white/40 text-xs text-center px-2">
                           No Image
                         </div>
@@ -351,4 +364,4 @@ useEffect(() => {
   );
 };
 
-export default HeroSection;
+export default React.memo(HeroSection);

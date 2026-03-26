@@ -59,7 +59,7 @@ class ErrorBoundary extends React.Component {
       const isDevelopment = process.env.NODE_ENV === 'development';
       
       return (
-        <div className="min-h-screen bg-surface-primary flex items-center justify-center p-4">
+        <div className="min-h-[calc(100vh-4rem)] bg-surface-primary flex items-center justify-center p-4">
           <div className="max-w-2xl w-full">
             <div className="bg-surface-secondary rounded-2xl p-8 shadow-xl border border-surface-tertiary">
               {/* Error Icon */}

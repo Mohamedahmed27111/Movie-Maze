@@ -131,13 +131,15 @@ const ReviewsSection = ({ topRatedMovies = [] }) => {
         {/* Reviews Carousel */}
         <div className="relative max-w-4xl mx-auto">
           {/* Main Review Card */}
-          <div className="bg-surface-secondary rounded-xl p-6 md:p-8 shadow-lg border border-surface-tertiary">
+          <div className="bg-surface-secondary/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl border border-surface-tertiary/60 relative overflow-hidden">
+            {/* Subtle top accent */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-primary/30 to-transparent" />
             <div className="flex flex-col md:flex-row gap-6">
               {/* User Info */}
               <div className="flex-shrink-0">
                 <div className="flex items-center gap-4 mb-4">
                   {/* Avatar */}
-                  <div className="w-12 h-12 bg-brand-primary rounded-full flex items-center justify-center font-bold text-surface-primary">
+                  <div className="w-12 h-12 bg-gradient-to-br from-brand-primary to-yellow-600 rounded-full flex items-center justify-center font-bold text-surface-primary text-sm shadow-lg">
                     {mockReviews[currentReview].userAvatar}
                   </div>
                   <div>

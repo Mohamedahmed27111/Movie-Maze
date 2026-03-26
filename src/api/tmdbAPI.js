@@ -2,7 +2,12 @@
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
+
 const fetchFromTMDB = async (endpoint, params = {}) => {
+  if (!API_KEY || API_KEY === 'your_tmdb_read_access_token_here') {
+    throw new Error('TMDB API key is missing. Please add REACT_APP_TMDB_API_KEY to your .env file.');
+  }
+
   const url = new URL(BASE_URL + endpoint);
   Object.entries(params).forEach(([key, value]) => {
     if (value != null) url.searchParams.append(key, value);

@@ -13,8 +13,7 @@ import {
   User, 
   X,
   Search,
-  Sliders,
-  
+  Sliders
 } from 'lucide-react';
 
 const MoviesPage = () => {
@@ -448,7 +447,7 @@ const MoviesPage = () => {
           </div>
 
           {/* Enhanced Control Bar */}
-          <div className="bg-surface-secondary/50 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-surface-interactive/20">
+          <div className="bg-surface-secondary/40 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-surface-tertiary/30 shadow-lg">
             <div className="flex flex-col lg:flex-row  lg:justify-between gap-4 lg:gap-6">
               
               {/* User Stats & View Mode - Mobile: Stack, Desktop: Row */}

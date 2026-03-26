@@ -18,10 +18,10 @@ const MovieCard = ({ movie, viewMode = 'grid', showRating = true, showYear = tru
 
   const isFavorite = favorites.includes(movie.id);
   const isInWatchlist = watchlist.includes(movie.id);
-  const releaseYear = new Date(movie.release_date).getFullYear();
+  const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : null;
   const posterUrl = movie.poster_path 
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-    : '/placeholder-movie.jpg';
+    : null;
 
   const handleFavoriteToggle = (e) => {
     e.preventDefault();
@@ -63,7 +63,7 @@ const MovieCard = ({ movie, viewMode = 'grid', showRating = true, showYear = tru
           {/* Poster */}
           <div className="flex-shrink-0 relative">
             <div className="w-20 h-28 bg-surface-tertiary rounded-md overflow-hidden">
-              {!imageError ? (
+              {!imageError && posterUrl ? (
                 <img
                   src={posterUrl}
                   alt={movie.title}
@@ -141,24 +141,25 @@ const MovieCard = ({ movie, viewMode = 'grid', showRating = true, showYear = tru
   // Grid view (default) - Fixed height for consistent card sizes
   return (
     <div
-      className="relative bg-surface-secondary rounded-lg overflow-hidden  transition-all duration-300 border border-surface-tertiary hover:border-yellow-400 hover:shadow-glow"
+      className="relative bg-surface-secondary rounded-xl overflow-hidden transition-all duration-300 border border-surface-tertiary/60 hover:border-brand-primary/60 hover:shadow-[0_0_24px_rgba(250,204,21,0.15)] group cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ height: '480px' }} // Fixed height for all cards
+      style={{ height: '480px' }}
     >
       <Link to={`/movie/${movie.id}`} className=" h-full flex flex-col">
         {/* Poster - Fixed aspect ratio */}
-        <div className="relative bg-surface-tertiary flex-shrink-0 scale-95 rounded-md  hover:scale-100 transition-transform duration-300" style={{ height: '370px' }}>
-          {!imageError ? (
+        <div className="relative bg-surface-tertiary flex-shrink-0 overflow-hidden" style={{ height: '370px' }}>
+          {!imageError && posterUrl ? (
             <img
               src={posterUrl}
               alt={movie.title}
-              className="w-full h-full object-cover rounded-md "
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               onError={handleImageError}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-text-muted ">
-              <Play className="w-12 h-12" />
+            <div className="w-full h-full flex flex-col items-center justify-center text-text-muted gap-2 bg-gradient-to-b from-surface-tertiary to-surface-secondary">
+              <Play className="w-10 h-10 opacity-30" />
+              <span className="text-xs opacity-40 text-center px-4 leading-relaxed line-clamp-2">{movie.title}</span>
             </div>
           )}
 
@@ -192,42 +193,41 @@ const MovieCard = ({ movie, viewMode = 'grid', showRating = true, showYear = tru
 
           {/* Rating Badge */}
           {showRating && movie.vote_average > 0 && (
-            <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1">
+            <div className="absolute top-2 left-2 bg-black/75 backdrop-blur-md text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 border border-yellow-400/20 shadow-lg">
               <Star className="w-3 h-3 text-yellow-400 fill-current" />
-              {movie.vote_average.toFixed(1)}
+              <span className="text-yellow-300">{movie.vote_average.toFixed(1)}</span>
             </div>
           )}
 
           {/* Play Button Overlay */}
-          <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-all duration-200 ${
+          <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-center justify-center transition-all duration-300 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}>
-            <div className="w-12 h-12 bg-brand-primary rounded-full flex items-center justify-center transform scale-75 hover:scale-100 transition-transform duration-200">
-              <Play className="w-6 h-6 text-surface-primary ml-1" />
+            <div className="w-14 h-14 bg-brand-primary rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(250,204,21,0.5)] transition-transform duration-300 hover:scale-110 scale-90 group-hover:scale-100">
+              <Play className="w-6 h-6 text-surface-primary ml-1" fill="currentColor" />
             </div>
           </div>
         </div>
 
         {/* Movie Info - Fixed height */}
-        <div className="p-4 flex flex-col justify-between" style={{ height: '140px' }}>
+        <div className="p-4 flex flex-col justify-between bg-gradient-to-b from-surface-secondary to-surface-secondary/80" style={{ height: '110px' }}>
           <div className="flex-1">
-            <h3 className={`font-bold mb-2 line-clamp-2 transition-colors leading-tight ${
-              isHovered ? 'text-yellow-400' : 'text-text-primary'
+            <h3 className={`font-bold text-sm mb-1.5 line-clamp-2 transition-colors leading-tight ${
+              isHovered ? 'text-brand-primary' : 'text-text-primary'
             }`}>
               {movie.title}
             </h3>
           </div>
           
-          <div className={`flex items-center justify-between text-sm transition-colors ${
-            isHovered ? 'text-yellow-300' : 'text-text-secondary'
+          <div className={`flex items-center justify-between text-xs transition-colors ${
+            isHovered ? 'text-brand-primary/80' : 'text-text-muted'
           }`}>
-            {showYear && movie.release_date && (
-              <span>{releaseYear}</span>
+            {showYear && releaseYear && (
+              <span className="font-medium">{releaseYear}</span>
             )}
             
             {movie.genre_ids && movie.genre_ids.length > 0 && (
-              <span className="truncate ml-2">
-                {/* You can map genre_ids to genre names if you have genres context */}
+              <span className="bg-surface-tertiary px-2 py-0.5 rounded-full text-text-tertiary">
                 {movie.genre_ids.length} {movie.genre_ids.length === 1 ? 'genre' : 'genres'}
               </span>
             )}

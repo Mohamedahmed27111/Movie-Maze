@@ -32,21 +32,30 @@ const HomePage = () => {
     try {
       setError(null);
       
-      // Fetch all movie categories concurrently
-      const [trendingData, popularData, topRatedData] = await Promise.all([
+      // Fetch all movie categories + genre list concurrently
+      const [trendingData, popularData, topRatedData, genreData] = await Promise.all([
         tmdbAPI.getTrending('movie', 'week'),
         tmdbAPI.getPopular(1),
-        tmdbAPI.getTopRated(1)
+        tmdbAPI.getTopRated(1),
+        tmdbAPI.getGenres(),
       ]);
+
+      // Build a quick id→name map for genres
+      const genreMap = {};
+      (genreData.genres || []).forEach(g => { genreMap[g.id] = g.name; });
 
       // Update state with fetched data
       setTrendingMovies(trendingData.results || []);
       setPopularMovies(popularData.results || []);
       setTopRatedMovies(topRatedData.results || []);
 
-      // Set hero movies from trending (first 10 for rotation)
+      // Set hero movies from trending — enrich with genres objects
       if (trendingData.results && trendingData.results.length > 0) {
-        setHeroMovies(trendingData.results);
+        const enriched = trendingData.results.map(movie => ({
+          ...movie,
+          genres: (movie.genre_ids || []).map(id => ({ id, name: genreMap[id] })).filter(g => g.name),
+        }));
+        setHeroMovies(enriched);
       }
 
     } catch (err) {
@@ -141,10 +150,10 @@ const HomePage = () => {
   // Loading state
   if (isLoadingInitial && loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-4rem)] bg-surface-primary flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-white/60">Loading amazing movies...</p>
+          <p className="mt-4 text-text-secondary">Loading amazing movies...</p>
         </div>
       </div>
     );
@@ -153,16 +162,16 @@ const HomePage = () => {
   // Error state
   if (error && !trendingMovies.length) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-4rem)] bg-surface-primary flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <div className="text-6xl mb-4">🎬</div>
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-text-primary mb-2">
             Oops! Something went wrong
           </h2>
-          <p className="text-white/60 mb-6">{error}</p>
+          <p className="text-text-secondary mb-6">{error}</p>
           <button 
             onClick={handleRetry}
-            className="bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors"
+            className="bg-brand-primary text-surface-primary px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors"
           >
             Try Again
           </button> 
@@ -172,7 +181,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-surface-primary">
       {/* Hero Section */}
       {heroMovies.length > 0 && (
         <HeroSection 
@@ -185,21 +194,21 @@ const HomePage = () => {
       )}
 
       {/* Movie Sections */}
-      <div className="bg-slate-900 pt-16">
+      <div className="bg-surface-primary pt-16">
         {/* Trending Movies Section */}
         {trendingMovies.length > 0 && (
           <section className="mb-16">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <Star className="w-6 h-6 text-yellow-400" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-white">
+                  <Star className="w-6 h-6 text-brand-primary" />
+                  <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
                     Trending Movies
                   </h2>
                 </div>
                 <Link
                   to="/movies?category=trending"
-                  className="text-yellow-400 hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
+                  className="text-brand-primary hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
                 >
                   View All
                 </Link>
@@ -215,14 +224,14 @@ const HomePage = () => {
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <Star className="w-6 h-6 text-yellow-400" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-white">
+                  <Star className="w-6 h-6 text-brand-primary" />
+                  <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
                     Popular Movies
                   </h2>
                 </div>
                 <Link
                   to="/movies?category=popular"
-                  className="text-yellow-400 hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
+                  className="text-brand-primary hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
                 >
                   View All
                 </Link>
@@ -238,14 +247,14 @@ const HomePage = () => {
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <Star className="w-6 h-6 text-yellow-400" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-white">
+                  <Star className="w-6 h-6 text-brand-primary" />
+                  <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
                     Top Rated
                   </h2>
                 </div>
                 <Link
                   to="/movies?category=top_rated"
-                  className="text-yellow-400 hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
+                  className="text-brand-primary hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
                 >
                   View All
                 </Link>
@@ -289,21 +298,21 @@ const HomePage = () => {
       {/* Simple Auth Modal (replace AuthModal component) */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 p-8 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-2xl font-bold text-white mb-4">Sign In</h3>
-            <p className="text-white/60 mb-6">
+          <div className="bg-surface-secondary p-8 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-2xl font-bold text-text-primary mb-4">Sign In</h3>
+            <p className="text-text-secondary mb-6">
               Sign in to create watchlists and mark your favorite movies.
             </p>
             <div className="space-y-4">
               <button
                 onClick={handleLogin}
-                className="w-full bg-yellow-400 text-black py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors"
+                className="w-full bg-brand-primary text-surface-primary py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors"
               >
                 Mock Sign In (Demo)
               </button>
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="w-full bg-transparent border border-white/20 text-white py-3 rounded-lg hover:bg-white/10 transition-colors"
+                className="w-full bg-transparent border border-surface-tertiary text-text-primary py-3 rounded-lg hover:bg-surface-tertiary transition-colors"
               >
                 Cancel
               </button>

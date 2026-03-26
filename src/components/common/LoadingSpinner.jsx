@@ -1,161 +1,108 @@
 // components/common/LoadingSpinner.jsx
 import React from 'react';
-import { Loader2, Film, Star } from 'lucide-react';
+import { Film } from 'lucide-react';
+import '../../App.css';
 
-const LoadingSpinner = ({ 
-  size = 'md', 
-  variant = 'default', 
-  className = '', 
+// ─── Ring size map ────────────────────────────────────────────────────────────
+const RING_SIZES = {
+  xs: { ring: 'w-4 h-4',    border: 'border-2',      dot: 'w-1 h-1',     text: 'text-xs',   gap: 'gap-1.5' },
+  sm: { ring: 'w-5 h-5',    border: 'border-2',      dot: 'w-1.5 h-1.5', text: 'text-sm',   gap: 'gap-2'   },
+  md: { ring: 'w-7 h-7',    border: 'border-2',      dot: 'w-2 h-2',     text: 'text-base', gap: 'gap-2.5' },
+  lg: { ring: 'w-10 h-10',  border: 'border-[3px]',  dot: 'w-2.5 h-2.5', text: 'text-lg',   gap: 'gap-3'   },
+  xl: { ring: 'w-14 h-14',  border: 'border-4',      dot: 'w-3 h-3',     text: 'text-xl',   gap: 'gap-4'   },
+};
+
+// ─── Variant colour map ───────────────────────────────────────────────────────
+const VARIANT_COLORS = {
+  default:   { ring: 'border-brand-primary',  dot: 'bg-brand-primary',  text: 'text-text-secondary' },
+  primary:   { ring: 'border-brand-primary',  dot: 'bg-brand-primary',  text: 'text-brand-primary'  },
+  secondary: { ring: 'border-text-secondary', dot: 'bg-text-secondary', text: 'text-text-secondary' },
+  accent:    { ring: 'border-brand-accent',   dot: 'bg-brand-accent',   text: 'text-brand-accent'   },
+  white:     { ring: 'border-white',          dot: 'bg-white',          text: 'text-white'           },
+};
+
+// ─── Core ring spinner ────────────────────────────────────────────────────────
+export const RingSpinner = ({ size = 'md', variant = 'default' }) => {
+  const s = RING_SIZES[size]  || RING_SIZES.md;
+  const v = VARIANT_COLORS[variant] || VARIANT_COLORS.default;
+  return (
+    <div className={`relative flex-shrink-0 ${s.ring}`}>
+      {/* Track */}
+      <div className={`absolute inset-0 rounded-full ${s.border} border-surface-tertiary`} />
+      {/* Spinning arc */}
+      <div className={`absolute inset-0 rounded-full ${s.border} ${v.ring} border-t-transparent animate-spin`} />
+      {/* Inner pulse dot */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className={`rounded-full ${s.dot} ${v.dot} animate-pulse`} />
+      </div>
+    </div>
+  );
+};
+
+// ─── Main LoadingSpinner component ────────────────────────────────────────────
+const LoadingSpinner = ({
+  size = 'md',
+  variant = 'default',
+  className = '',
   text = '',
   centered = false,
-  fullScreen = false 
+  fullScreen = false,
 }) => {
-  // Size configurations
-  const sizes = {
-    xs: {
-      spinner: 'w-4 h-4',
-      text: 'text-xs',
-      container: 'gap-1'
-    },
-    sm: {
-      spinner: 'w-5 h-5',
-      text: 'text-sm',
-      container: 'gap-2'
-    },
-    md: {
-      spinner: 'w-6 h-6',
-      text: 'text-base',
-      container: 'gap-2'
-    },
-    lg: {
-      spinner: 'w-8 h-8',
-      text: 'text-lg',
-      container: 'gap-3'
-    },
-    xl: {
-      spinner: 'w-12 h-12',
-      text: 'text-xl',
-      container: 'gap-4'
-    }
-  };
+  const s = RING_SIZES[size]  || RING_SIZES.md;
+  const v = VARIANT_COLORS[variant] || VARIANT_COLORS.default;
 
-  const currentSize = sizes[size] || sizes.md;
-
-  // Variant configurations
-  const variants = {
-    default: {
-      spinner: 'text-brand-primary',
-      text: 'text-text-secondary'
-    },
-    primary: {
-      spinner: 'text-brand-primary',
-      text: 'text-brand-primary'
-    },
-    secondary: {
-      spinner: 'text-text-secondary',
-      text: 'text-text-secondary'
-    },
-    accent: {
-      spinner: 'text-brand-accent',
-      text: 'text-brand-accent'
-    },
-    white: {
-      spinner: 'text-white',
-      text: 'text-white'
-    }
-  };
-
-  const currentVariant = variants[variant] || variants.default;
-
-  // Different spinner types
-  const SpinnerIcon = ({ type }) => {
-    const iconClass = `${currentSize.spinner} ${currentVariant.spinner}`;
-    
-    switch (type) {
-      case 'film':
-        return <Film className={`${iconClass} animate-bounce`} />;
-      case 'star':
-        return <Star className={`${iconClass} animate-spin`} />;
-      case 'dots':
-        return (
-          <div className="flex space-x-1">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={`w-2 h-2 bg-current rounded-full animate-bounce ${currentVariant.spinner}`}
-                style={{ animationDelay: `${i * 0.1}s` }}
-              />
-            ))}
-          </div>
-        );
-      case 'pulse':
-        return (
-          <div className={`${currentSize.spinner} ${currentVariant.spinner} animate-pulse`}>
-            <div className="w-full h-full bg-current rounded-full opacity-75" />
-          </div>
-        );
-      default:
-        return <Loader2 className={`${iconClass} animate-spin`} />;
-    }
-  };
-
-  // Spinner content
   const spinnerContent = (
-    <div className={`flex items-center ${currentSize.container} ${centered ? 'justify-center' : ''}`}>
-      <SpinnerIcon type={variant === 'film' ? 'film' : variant === 'dots' ? 'dots' : 'default'} />
+    <div className={`flex items-center justify-center ${s.gap}`}>
+      <RingSpinner size={size} variant={variant} />
       {text && (
-        <span className={`${currentSize.text} ${currentVariant.text} font-medium`}>
-          {text}
-        </span>
+        <span className={`${s.text} ${v.text} font-medium`}>{text}</span>
       )}
     </div>
   );
 
-  // If fullScreen is true, wrap in a full-screen centered container
   if (fullScreen) {
     return (
-      <div className={`fixed inset-0 flex items-center justify-center bg-surface-primary bg-opacity-75 z-modal ${className}`}>
+      <div className={`fixed inset-0 flex items-center justify-center bg-surface-primary/80 backdrop-blur-sm z-50 ${className}`}>
         {spinnerContent}
       </div>
     );
   }
 
-  // If centered is true, wrap in a centered container
- if (centered) {
-  return (
-    <div className={`flex justify-center items-center w-full h-full ${className}`}>
-      {spinnerContent}
-    </div>
-  );
-}
+  if (centered) {
+    return (
+      <div className={`flex justify-center items-center w-full h-full ${className}`}>
+        {spinnerContent}
+      </div>
+    );
+  }
 
-  // Default inline spinner
-  return (
-    <div className={className}>
-      {spinnerContent}
-    </div>
-  );
+  return <div className={`flex justify-center ${className}`}>{spinnerContent}</div>;
 };
 
 // Specialized loading components
 
 export const PageLoader = ({ text = 'Loading...', className = '' }) => (
-  <div className={`flex items-center justify-center text-center min-h-[400px] ${className}`}>
-    <div className="text-center">
-      <LoadingSpinner size="xl" variant="primary" />
-      <p className="mt-4 text-text-secondary">{text}</p>
+  <div className={`flex items-center justify-center min-h-[400px] ${className}`}>
+    <div className="text-center space-y-4">
+      <div className="relative inline-flex items-center justify-center">
+        <div className="w-14 h-14 rounded-full border-4 border-surface-tertiary" />
+        <div className="absolute w-14 h-14 rounded-full border-4 border-brand-primary border-t-transparent animate-spin" />
+        <Film className="absolute w-5 h-5 text-brand-primary" />
+      </div>
+      <p className="text-text-secondary text-sm font-medium">{text}</p>
     </div>
   </div>
 );
 
-export const InlineLoader = ({ text = 'Loading...', className = '' }) => (
-  <div className={`flex justify-center items-center py-4 ${className}`}>
-    <LoadingSpinner size="sm" text={text} />
+export const InlineLoader = ({ text = '', className = '' }) => (
+  <div className={`flex items-center justify-center gap-2.5 py-4 ${className}`}>
+    <RingSpinner size="sm" />
+    {text && <span className="text-text-secondary text-sm font-medium">{text}</span>}
   </div>
 );
 
 export const ButtonLoader = ({ size = 'sm' }) => (
-  <LoadingSpinner size={size} variant="white" />
+  <RingSpinner size={size} variant="white" />
 );
 
 export const FullScreenLoader = ({ text = 'Loading...', className = '' }) => (
@@ -167,18 +114,18 @@ export const CenteredLoader = ({ size = 'md', text = '', className = '' }) => (
 );
 
 export const CardLoader = () => (
-  <div className="animate-pulse">
-    <div className="bg-surface-tertiary rounded-lg aspect-poster mb-4" />
-    <div className="space-y-2">
-      <div className="h-4 bg-surface-tertiary rounded w-3/4" />
-      <div className="h-3 bg-surface-tertiary rounded w-1/2" />
+  <div className="rounded-xl overflow-hidden">
+    <div className="skeleton-shimmer rounded-xl mb-3" style={{ aspectRatio: '2/3' }} />
+    <div className="space-y-2 px-1">
+      <div className="skeleton-shimmer h-4 rounded-md" style={{ width: '75%' }} />
+      <div className="skeleton-shimmer h-3 rounded-md" style={{ width: '45%' }} />
     </div>
   </div>
 );
 
 export const MovieGridLoader = ({ count = 12 }) => (
-  <div className="grid grid-movies-mobile md:grid-movies-tablet lg:grid-movies-desktop gap-6">
-    {Array.from({ length: count },  (_, i) => (
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
+    {Array.from({ length: count }, (_, i) => (
       <CardLoader key={i} />
     ))}
   </div>

@@ -23,7 +23,7 @@ const GenreBrowser = ({ popularMovies = [], onGenreClick }) => {
       return `https://image.tmdb.org/t/p/w780${movieWithGenre.backdrop_path}`;
     }
     
-    return '/api/placeholder/400/300';
+    return null;
   };
 
   // Get movie count for genre (mock data - you can implement real count via API)
@@ -42,16 +42,17 @@ const GenreBrowser = ({ popularMovies = [], onGenreClick }) => {
   };
 
   return (
-    <section className="py-16 bg-slate-900/50">
+    <section className="py-16 bg-surface-primary/50">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
-              Browse by Genre
-            </h2>
+          <div className="inline-flex items-center gap-2 bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+            Browse
           </div>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-text-primary">
+            Explore by Genre
+          </h2>
+          <p className="text-text-secondary mt-3 max-w-2xl mx-auto">
             Discover your next favorite movie by exploring different genres
           </p>
         </div>
@@ -61,19 +62,21 @@ const GenreBrowser = ({ popularMovies = [], onGenreClick }) => {
           {genres.map((genre) => (
             <div
               key={genre.id}
-              className="group relative h-48 md:h-52 rounded-xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative h-48 md:h-52 rounded-2xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/40"
               onClick={() => onGenreClick?.(genre.id)}
             >
               {/* Background Image */}
               <div className="absolute inset-0">
-                <img
-                  src={getGenreBackground(genre.id)}
-                  alt={`${genre.name} movies`}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
+                {getGenreBackground(genre.id) && (
+                  <img
+                    src={getGenreBackground(genre.id)}
+                    alt={`${genre.name} movies`}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                )}
                 
                 {/* Gradient Overlay */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${genre.color} opacity-80 group-hover:opacity-70 transition-opacity duration-300`} />
@@ -99,7 +102,7 @@ const GenreBrowser = ({ popularMovies = [], onGenreClick }) => {
               </div>
 
               {/* Hover Effect Border */}
-              <div className="absolute inset-0 border-2 border-transparent group-hover:border-yellow-400/50 rounded-xl transition-colors duration-300" />
+              <div className="absolute inset-0 border-2 border-transparent group-hover:border-white/25 rounded-2xl transition-colors duration-300" />
             </div>
           ))}
         </div>
