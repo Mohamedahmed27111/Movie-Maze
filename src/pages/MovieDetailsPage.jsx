@@ -202,32 +202,7 @@ const MovieDetailsPage = () => {
                   </div>
                 </div>
                 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row lg:flex-col gap-3 mt-6 w-full max-w-sm lg:max-w-none">
-                  <button
-                    onClick={handleFavoriteClick}
-                    className={`flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                      isFavorite 
-                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/25 hover:bg-red-600' 
-                        : 'bg-surface-secondary text-text-secondary hover:bg-surface-interactive hover:text-text-primary border border-surface-tertiary'
-                    }`}
-                  >
-                    <HeartIcon size={18} fill={isFavorite ? 'currentColor' : 'none'} />
-                    <span className="text-sm">{isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}</span>
-                  </button>
-                  
-                  <button
-                    onClick={handleWatchlistClick}
-                    className={`flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                      isInWatchlist 
-                        ? 'bg-brand-primary text-surface-primary shadow-lg shadow-brand-primary/25 hover:bg-yellow-500' 
-                        : 'bg-surface-secondary text-text-secondary hover:bg-surface-interactive hover:text-text-primary border border-surface-tertiary'
-                    }`}
-                  >
-                    <BookmarkIcon size={18} fill={isInWatchlist ? 'currentColor' : 'none'} />
-                    <span className="text-sm">{isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}</span>
-                  </button>
-                </div>
+
               </div>
             </div>
 

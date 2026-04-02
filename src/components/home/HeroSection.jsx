@@ -250,7 +250,7 @@ useEffect(() => {
                 className="bg-yellow-400 text-black px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-base sm:text-lg hover:bg-yellow-500 transition-all duration-200 flex items-center justify-center gap-2 sm:gap-3 hover:scale-105 shadow-2xl"
               >
                 <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
-                Watch now
+                Movie Details
               </button>
             </div>
           </div>
