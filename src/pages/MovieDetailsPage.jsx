@@ -285,6 +285,30 @@ const MovieDetailsPage = () => {
                   <ShareIcon size={20} />
                   <span>Share Movie</span>
                 </button>
+
+                <button
+                  onClick={handleFavoriteClick}
+                  className={`flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold border transition-all duration-200 hover:scale-105 ${
+                    isFavorite
+                      ? 'bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/30'
+                      : 'bg-surface-secondary/80 backdrop-blur-sm text-text-primary border-surface-tertiary hover:bg-surface-interactive'
+                  }`}
+                >
+                  <HeartIcon size={20} fill={isFavorite ? 'currentColor' : 'none'} />
+                  <span>{isFavorite ? 'Unfavorite' : 'Favorite'}</span>
+                </button>
+
+                <button
+                  onClick={handleWatchlistClick}
+                  className={`flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold border transition-all duration-200 hover:scale-105 ${
+                    isInWatchlist
+                      ? 'bg-brand-primary/20 border-brand-primary/50 text-brand-primary hover:bg-brand-primary/30'
+                      : 'bg-surface-secondary/80 backdrop-blur-sm text-text-primary border-surface-tertiary hover:bg-surface-interactive'
+                  }`}
+                >
+                  <BookmarkIcon size={20} fill={isInWatchlist ? 'currentColor' : 'none'} />
+                  <span>{isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}</span>
+                </button>
               </div>
 
               {/* Overview */}
