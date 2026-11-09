@@ -1,6 +1,6 @@
 // App.js
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigationType } from 'react-router-dom';
 import { MovieProvider } from './contexts/MovieContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
@@ -83,11 +83,15 @@ const AppLoadingFallback = () => (
 
 export default App;
 
-// Scrolls to top on every route change
+// Scrolls to top on forward navigation and query changes.
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const navigationType = useNavigationType();
+
   React.useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [pathname]);
+    if (navigationType === 'POP') return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname, search, navigationType]);
+
   return null;
 }

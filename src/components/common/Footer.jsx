@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Github, Mail, Twitter } from 'lucide-react';
 
 const socialLinks = [
@@ -30,6 +30,8 @@ const Footer = () => {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const currentYear = new Date().getFullYear();
+  const location = useLocation();
+  const currentPath = location.pathname + location.search;
 
   const handleEmailSubmit = (event) => {
     event.preventDefault();
@@ -98,6 +100,11 @@ const Footer = () => {
                     <li key={link.name}>
                       <Link
                         to={link.path}
+                        onClick={() => {
+                          if (link.path === currentPath) {
+                            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                          }
+                        }}
                         className="footer-link ui-interactive text-sm text-[#9AA4BF]"
                       >
                         {link.name}

@@ -38,15 +38,15 @@ const MoviesPage = () => {
   // Local user state (replaces Firebase auth)
   const [user, setUser] = useState(null);
 
-  const [filters, setFilters] = useState({
+  const filters = useMemo(() => ({
     category: searchParams.get('category') || 'popular',
     genre: searchParams.get('genre') || '',
     year: searchParams.get('year') || '',
     sortBy: searchParams.get('sortBy') || 'popularity.desc',
-    page: parseInt(searchParams.get('page')) || 1,
+    page: Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10) || 1),
     minRating: searchParams.get('minRating') || '',
     language: searchParams.get('language') || ''
-  });
+  }), [searchParams]);
 
   const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -107,7 +107,11 @@ const MoviesPage = () => {
         setViewMode(prefs.viewMode || 'grid');
 
         if (!searchParams.toString()) {
-          setFilters(prev => ({ ...prev, ...prefs.defaultFilters }));
+          const preferredFilters = new URLSearchParams();
+          Object.entries(prefs.defaultFilters || {}).forEach(([key, value]) => {
+            if (value) preferredFilters.set(key, String(value));
+          });
+          setSearchParams(preferredFilters);
         }
       }
 
@@ -131,7 +135,7 @@ const MoviesPage = () => {
     } finally {
       setIsLoadingUserData(false);
     }
-  }, [user, searchParams]);
+  }, [user, searchParams, setSearchParams]);
 
   // Fetch movies with filters
   const fetchMoviesWithFilters = useCallback(async () => {
@@ -196,13 +200,8 @@ const MoviesPage = () => {
   }, [fetchGenres]);
 
   useEffect(() => {
-    const newParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) newParams.set(key, value);
-    });
-    setSearchParams(newParams);
     fetchMoviesWithFilters();
-  }, [filters, setSearchParams, fetchMoviesWithFilters]);
+  }, [filters, fetchMoviesWithFilters]);
 
   // Get active movies with proper error handling
   const getActiveMovies = () => {
@@ -296,32 +295,25 @@ const MoviesPage = () => {
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      page: 1,
-      [key]: value
-    }));
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      if (value) nextParams.set(key, String(value));
+      else nextParams.delete(key);
+      nextParams.set('page', '1');
+      return nextParams;
+    });
   };
 
   const handlePageChange = (newPage) => {
-    setFilters(prev => ({
-      ...prev,
-      page: newPage
-    }));
-    // Scroll to top when changing pages
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set('page', String(newPage));
+      return nextParams;
+    });
   };
 
   const clearFilters = () => {
-    setFilters({
-      category: 'popular',
-      genre: '',
-      year: '',
-      sortBy: 'popularity.desc',
-      page: 1,
-      minRating: '',
-      language: ''
-    });
+    setSearchParams({ category: 'popular' });
   };
 
   // Save user preferences to localStorage
@@ -347,6 +339,24 @@ const MoviesPage = () => {
 
   const activeMovies = getActiveMovies();
   const moviesMetadata = getMoviesMetadata();
+  const query = searchParams.get('query') || searchParams.get('q') || '';
+  const activeCategory = categories.find(({ value }) => value === filters.category);
+  const activeGenre = genres?.find(({ id }) => String(id) === filters.genre);
+  const heading = query
+    ? `Results for “${query}”`
+    : activeGenre
+      ? `${activeGenre.name} Movies`
+      : filters.category === 'top_rated'
+        ? 'Top Rated Movies'
+        : filters.category === 'now_playing'
+          ? 'Now Playing'
+          : activeCategory
+            ? `${activeCategory.label} Movies`
+            : 'Discover Movies';
+
+  useEffect(() => {
+    document.title = `${heading} | Movie Maze`;
+  }, [heading]);
 
   // Memoised so cards aren't re-rendered on unrelated state changes (filters, loading flags…).
   const enhancedMovies = useMemo(
@@ -420,11 +430,13 @@ const MoviesPage = () => {
         <div className="mb-6 sm:mb-8">
           <div className="mb-5">
             <h1 className="mb-2 text-3xl font-bold tracking-tight text-[#FFC933] sm:text-4xl">
-              Discover Movies
+              {heading}
             </h1>
             <p className="flex items-center gap-2 text-sm text-[#9AA4BF] sm:text-base">
               <Search className="h-4 w-4" aria-hidden="true" />
-              {`${(moviesMetadata?.totalResults || 0).toLocaleString()} movies found`}
+              {filters.genre && activeGenre && activeCategory
+                ? `${activeCategory.label} · ${(moviesMetadata?.totalResults || 0).toLocaleString()} movies found`
+                : `${(moviesMetadata?.totalResults || 0).toLocaleString()} movies found`}
             </p>
           </div>
 
