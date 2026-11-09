@@ -17,16 +17,29 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 function App() {
   return (
     <ErrorBoundary>
-      <div className="App bg-surface-primary min-h-screen text-text-primary">
+      <div className="App min-h-screen bg-[#0A0E1A] text-[#F4F6FB]">
         <Router>
               <ScrollToTop />
               <MovieProvider>
-                <div className="flex flex-col min-h-screen">
+                <AppLayout />
+              </MovieProvider>
+        </Router>
+      </div>
+    </ErrorBoundary>
+  );
+}
+
+function AppLayout() {
+  const { pathname } = useLocation();
+  const isHome = pathname === '/';
+
+  return (
+    <div className="flex min-h-screen flex-col">
                   {/* Header */}
                   <Header />
                   
                   {/* Main Content */}
-                  <main className="flex-1 pt-16">
+                  <main className={`flex-1 ${isHome ? 'pt-0' : 'pt-16'}`}>
                     <Suspense fallback={<AppLoadingFallback />}>
                       <Routes>
                         {/* Public Routes */}
@@ -45,11 +58,7 @@ function App() {
                   
                   {/* Footer */}
                   <Footer />
-                </div>
-              </MovieProvider>
-        </Router>
-      </div>
-    </ErrorBoundary>
+    </div>
   );
 }
 

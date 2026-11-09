@@ -54,6 +54,9 @@ const initialState = {
   error: null
 };
 
+// Strip movies flagged as adult content
+const filterAdult = (results = []) => results.filter(m => !m.adult);
+
 // Movie reducer - FIXED: Replace content instead of appending for pagination
 function movieReducer(state, action) {
   switch (action.type) {
@@ -76,7 +79,7 @@ function movieReducer(state, action) {
       return {
         ...state,
         trending: {
-          movies: action.payload.results, // FIXED: Always replace, don't append
+          movies: filterAdult(action.payload.results),
           page: action.payload.page,
           totalPages: action.payload.total_pages,
           totalResults: action.payload.total_results
@@ -87,7 +90,7 @@ function movieReducer(state, action) {
       return {
         ...state,
         popular: {
-          movies: action.payload.results, // FIXED: Always replace, don't append
+          movies: filterAdult(action.payload.results),
           page: action.payload.page,
           totalPages: action.payload.total_pages,
           totalResults: action.payload.total_results
@@ -98,7 +101,7 @@ function movieReducer(state, action) {
       return {
         ...state,
         topRated: {
-          movies: action.payload.results, // FIXED: Always replace, don't append
+          movies: filterAdult(action.payload.results),
           page: action.payload.page,
           totalPages: action.payload.total_pages,
           totalResults: action.payload.total_results
@@ -109,7 +112,7 @@ function movieReducer(state, action) {
       return {
         ...state,
         nowPlaying: {
-          movies: action.payload.results, // FIXED: Always replace, don't append
+          movies: filterAdult(action.payload.results),
           page: action.payload.page,
           totalPages: action.payload.total_pages,
           totalResults: action.payload.total_results
@@ -120,7 +123,7 @@ function movieReducer(state, action) {
       return {
         ...state,
         upcoming: {
-          movies: action.payload.results, // FIXED: Always replace, don't append
+          movies: filterAdult(action.payload.results),
           page: action.payload.page,
           totalPages: action.payload.total_pages,
           totalResults: action.payload.total_results
@@ -131,7 +134,7 @@ function movieReducer(state, action) {
       return {
         ...state,
         searchResults: {
-          movies: action.payload.results, // FIXED: Always replace, don't append
+          movies: filterAdult(action.payload.results),
           query: action.payload.query,
           page: action.payload.page,
           totalPages: action.payload.total_pages,
@@ -202,7 +205,7 @@ export function MovieProvider({ children }) {
   // Fetch trending movies
   const fetchTrending = useCallback(async (page = 1) => {
     return handleApiCall(
-      () => tmdbAPI.getTrending('movie', 'week').then(data => ({ ...data, page })),
+      () => tmdbAPI.getTrending('movie', 'week', page),
       MOVIE_ACTIONS.SET_TRENDING,
       'trending'
     );
@@ -327,24 +330,42 @@ export function MovieProvider({ children }) {
     return state.movieDetailsCache[movieId] || null;
   }, [state.movieDetailsCache]);
 
-  const value = {
-    // State
-    ...state,
-    
-    // Actions
-    fetchTrending,
-    fetchPopular,
-    fetchTopRated,
-    fetchNowPlaying,
-    fetchUpcoming,
-    searchMovies,
-    fetchMovieDetails,
-    fetchGenres,
-    discoverMovies,
-    clearSearch,
-    clearError,
-    getMovieFromCache
-  };
+  // Memoised so consumers don't re-render on every unrelated state change.
+  const value = React.useMemo(
+    () => ({
+      // State
+      ...state,
+
+      // Actions
+      fetchTrending,
+      fetchPopular,
+      fetchTopRated,
+      fetchNowPlaying,
+      fetchUpcoming,
+      searchMovies,
+      fetchMovieDetails,
+      fetchGenres,
+      discoverMovies,
+      clearSearch,
+      clearError,
+      getMovieFromCache
+    }),
+    [
+      state,
+      fetchTrending,
+      fetchPopular,
+      fetchTopRated,
+      fetchNowPlaying,
+      fetchUpcoming,
+      searchMovies,
+      fetchMovieDetails,
+      fetchGenres,
+      discoverMovies,
+      clearSearch,
+      clearError,
+      getMovieFromCache
+    ]
+  );
 
   return (
     <MovieContext.Provider value={value}>

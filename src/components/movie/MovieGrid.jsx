@@ -6,6 +6,7 @@ import { Film } from 'lucide-react';
 const MovieGrid = ({ 
   movies = [], 
   viewMode = 'grid', 
+  columns = 'responsive',
   loading = false, 
   emptyMessage = "No movies found",
   emptySubMessage = "Try adjusting your filters or search terms"
@@ -13,10 +14,12 @@ const MovieGrid = ({
   // Loading skeleton
   if (loading) {
     return (
-      <div className={`grid gap-5 ${
+      <div className={`movie-grid ${
         viewMode === 'list'
-          ? 'grid-cols-1'
-          : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+          ? 'movie-grid-list'
+          : columns === 'four'
+            ? 'movie-grid-four'
+            : ''
       }`}>
         {Array.from({ length: 8 }).map((_, index) => (
           <MovieGridSkeleton key={index} viewMode={viewMode} />
@@ -43,10 +46,12 @@ const MovieGrid = ({
   }
 
   return (
-    <div className={`grid gap-5 ${
+    <div className={`movie-grid ${
       viewMode === 'list'
-        ? 'grid-cols-1'
-        : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+        ? 'movie-grid-list'
+        : columns === 'four'
+          ? 'movie-grid-four'
+          : ''
     }`}>
       {movies.map((movie) => (
         <MovieCard 
@@ -87,8 +92,8 @@ const MovieGridSkeleton = ({ viewMode }) => {
 
   // Grid skeleton with shimmer
   return (
-    <div className="rounded-xl overflow-hidden">
-      <div className="skeleton-shimmer rounded-xl mb-3" style={{ aspectRatio: '2/3' }} />
+    <div className="rounded-2xl overflow-hidden">
+      <div className="poster-shimmer movie-poster mb-2" />
       <div className="space-y-2 px-1">
         <div className="skeleton-shimmer h-4 rounded-md" style={{ width: '75%' }} />
         <div className="skeleton-shimmer h-3 rounded-md" style={{ width: '45%' }} />

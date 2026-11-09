@@ -15,7 +15,7 @@ const MovieSlider = ({ movies, title, className = '' }) => {
   if (!movies || movies.length === 0) return null;
 
   return (
-    <div className={`relative group ${className}`}>
+    <div className={`relative group/slider ${className}`}>
       {title && (
         <h2 className="text-heading-md font-bold text-text-primary mb-6">
           {title}
@@ -33,9 +33,9 @@ const MovieSlider = ({ movies, title, className = '' }) => {
           className="absolute inset-y-0 left-0 w-20 z-10
                      flex items-center pl-2
                      bg-gradient-to-r from-surface-primary/85 via-surface-primary/20 to-transparent
-                     opacity-0 group-hover:opacity-100
+                     opacity-0 group-hover/slider:opacity-100
                      transition-opacity duration-200
-                     pointer-events-none group-hover:pointer-events-auto"
+                     pointer-events-none group-hover/slider:pointer-events-auto"
         >
           <button
             onClick={() => swiperRef.current?.slidePrev()}
@@ -57,9 +57,9 @@ const MovieSlider = ({ movies, title, className = '' }) => {
           className="absolute inset-y-0 right-0 w-20 z-10
                      flex items-center justify-end pr-2
                      bg-gradient-to-l from-surface-primary/85 via-surface-primary/20 to-transparent
-                     opacity-0 group-hover:opacity-100
+                     opacity-0 group-hover/slider:opacity-100
                      transition-opacity duration-200
-                     pointer-events-none group-hover:pointer-events-auto"
+                     pointer-events-none group-hover/slider:pointer-events-auto"
         >
           <button
             onClick={() => swiperRef.current?.slideNext()}

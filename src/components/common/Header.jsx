@@ -1,400 +1,321 @@
-// components/common/Header.jsx
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import tmdbAPI from '../../api/tmdbAPI';
-import { 
-  Search, 
-  Menu, 
-  X, 
-  Film,
-  Home,
-  Grid3X3,
+import {
   Clock,
-  TrendingUp
+  CornerDownLeft,
+  Film,
+  Grid3X3,
+  Home,
+  Menu,
+  Search,
+  X,
 } from 'lucide-react';
+
+const NAV_ITEMS = [
+  { to: '/', label: 'Home', icon: Home },
+  { to: '/movies', label: 'Movies', icon: Grid3X3 },
+];
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
-  
+  const [isScrolled, setIsScrolled] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const searchRef = useRef(null);
+  const headerRef = useRef(null);
   const searchDropdownRef = useRef(null);
+  const desktopInputRef = useRef(null);
+  const mobileInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+  const isHome = location.pathname === '/';
 
-  // Load recent searches from localStorage on component mount
   useEffect(() => {
-    const saved = localStorage.getItem('movieMaze_recentSearches');
-    if (saved) {
-      try {
-        setRecentSearches(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error loading recent searches:', error);
-      }
+    try {
+      const saved = localStorage.getItem('movieMaze_recentSearches');
+      if (saved) setRecentSearches(JSON.parse(saved));
+    } catch {
+      setRecentSearches([]);
     }
   }, []);
 
-  // Close search dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (searchDropdownRef.current && 
-          !searchDropdownRef.current.contains(event.target) &&
-          !searchRef.current.contains(event.target)) {
+      if (headerRef.current && !headerRef.current.contains(event.target)) {
         setShowSearchDropdown(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsMobileSearchOpen(false);
     setShowSearchDropdown(false);
-  }, [location]);
+  }, [location.pathname, location.search]);
 
-  // Debounced search function
-  const performSearch = async (query) => {
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (isMobileSearchOpen) mobileInputRef.current?.focus();
+  }, [isMobileSearchOpen]);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const typingInField = ['INPUT', 'TEXTAREA'].includes(event.target.tagName);
+      if ((event.key === 'k' && (event.metaKey || event.ctrlKey)) || (event.key === '/' && !typingInField)) {
+        event.preventDefault();
+        if (window.matchMedia('(max-width: 640px)').matches) {
+          setIsMobileSearchOpen(true);
+          setTimeout(() => mobileInputRef.current?.focus(), 0);
+        } else {
+          desktopInputRef.current?.focus();
+        }
+      }
+      if (event.key === 'Escape') {
+        setShowSearchDropdown(false);
+        setIsMenuOpen(false);
+        setIsMobileSearchOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  useEffect(() => () => clearTimeout(searchTimeoutRef.current), []);
+
+  const performSearch = useCallback(async (query) => {
     if (!query.trim() || query.length < 2) {
       setSearchResults([]);
       setIsSearching(false);
       return;
     }
-
     setIsSearching(true);
     try {
       const response = await tmdbAPI.searchMovies(query, 1);
-      setSearchResults(response.results.slice(0, 6)); // Limit to 6 results
-    } catch (error) {
-      console.error('Search failed:', error);
+      setSearchResults(response.results.slice(0, 6));
+    } catch {
       setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
-  };
+  }, []);
 
-  // Handle search input change with debouncing
-  const handleSearchChange = (e) => {
-    const query = e.target.value;
+  const handleSearchChange = (event) => {
+    const query = event.target.value;
     setSearchQuery(query);
-    
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    // Show dropdown when user starts typing
-    if (query.length > 0) {
-      setShowSearchDropdown(true);
-    }
-    
-    // Debounce search
-    searchTimeoutRef.current = setTimeout(() => {
-      performSearch(query);
-    }, 300);
+    setShowSearchDropdown(true);
+    clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => performSearch(query), 300);
   };
 
-  // Handle search form submission
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      executeSearch(searchQuery.trim());
-    }
-  };
-
-  // Execute search and save to recent searches
-  const executeSearch = (query) => {
-    // Add to recent searches
-    const updatedRecent = [query, ...recentSearches.filter(s => s !== query)].slice(0, 5);
-    setRecentSearches(updatedRecent);
-    localStorage.setItem('movieMaze_recentSearches', JSON.stringify(updatedRecent));
-    
-    // Navigate to search results
-    navigate(`/search?q=${encodeURIComponent(query)}`);
+  const executeSearch = useCallback((query) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setRecentSearches((previous) => {
+      const next = [trimmed, ...previous.filter((item) => item !== trimmed)].slice(0, 5);
+      try {
+        localStorage.setItem('movieMaze_recentSearches', JSON.stringify(next));
+      } catch {
+        return next;
+      }
+      return next;
+    });
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
     setSearchQuery('');
     setShowSearchDropdown(false);
+  }, [navigate]);
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    executeSearch(searchQuery);
   };
 
-  // Handle movie selection from dropdown
   const handleMovieSelect = (movie) => {
     navigate(`/movie/${movie.id}`);
     setSearchQuery('');
     setShowSearchDropdown(false);
   };
 
-  // Handle recent search selection
-  const handleRecentSearchSelect = (query) => {
-    setSearchQuery(query);
-    executeSearch(query);
-  };
-
-  // Clear recent searches
   const clearRecentSearches = () => {
     setRecentSearches([]);
-    localStorage.removeItem('movieMaze_recentSearches');
+    try {
+      localStorage.removeItem('movieMaze_recentSearches');
+    } catch {
+      setRecentSearches([]);
+    }
   };
 
-  const isActivePath = (path) => {
-    return location.pathname === path;
-  };
+  const isActivePath = (path) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
-  const NavLink = ({ to, children, className = '', ...props }) => (
-    <Link
-      to={to}
-      className={`transition-colors duration-200 hover:text-brand-primary ${
-        isActivePath(to) ? 'text-brand-primary' : 'text-text-secondary'
-      } ${className}`}
-      {...props}
-    >
-      {children}
-    </Link>
+  const renderSearchField = (inputRef) => (
+    <form onSubmit={handleSearch} className="nav-search relative w-full">
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9AA4BF]" aria-hidden="true" />
+      <input
+        ref={inputRef}
+        type="search"
+        placeholder="Search..."
+        value={searchQuery}
+        onChange={handleSearchChange}
+        onFocus={() => setShowSearchDropdown(true)}
+        aria-label="Search movies"
+        className="h-11 w-full rounded-full border border-[#232C48] bg-[#131A2E]/90 pl-10 pr-10 text-sm text-[#F4F6FB] placeholder:text-[#9AA4BF] focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+      />
+      <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-[#232C48] px-1.5 py-0.5 text-[10px] text-[#9AA4BF] min-[641px]:block">/</kbd>
+    </form>
   );
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-surface-primary/90 backdrop-blur-2xl border-b border-surface-tertiary/40 shadow-[0_1px_0_0_rgba(250,204,21,0.06)]">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="p-2 bg-gradient-to-br from-brand-primary to-yellow-500 rounded-xl group-hover:scale-105 transition-transform duration-200 shadow-lg">
-              <Film className="w-6 h-6 text-surface-primary" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-text-primary to-brand-primary bg-clip-text text-transparent group-hover:from-brand-primary group-hover:to-yellow-500 transition-all duration-200">
-              Movie Maze
+    <header
+      ref={headerRef}
+      className={`${
+        isHome && !isScrolled ? 'absolute' : 'fixed'
+      } left-0 right-0 top-0 z-50 border-b transition-colors duration-200 ${
+        isHome && !isScrolled
+          ? 'border-transparent bg-gradient-to-b from-[#0A0E1A]/90 to-transparent'
+          : 'border-[#1B2238] bg-[#0A0E1A]'
+      }`}
+    >
+      <div className="page-container">
+        <div className="grid h-16 grid-cols-[1fr_auto] items-center gap-3 min-[641px]:grid-cols-[1fr_auto_1fr]">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5" aria-label="Movie Maze home">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFC933] text-[#0A0E1A]">
+              <Film className="h-5 w-5" aria-hidden="true" />
             </span>
+            <span className="truncate text-lg font-bold text-[#F4F6FB]">Movie Maze</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-2">
-            <NavLink to="/" className="flex items-center space-x-2 px-4 py-2 rounded-xl hover:bg-surface-secondary/60 transition-all duration-200 relative group">
-              <Home className="w-4 h-4" />
-              <span className="font-medium">Home</span>
-              {isActivePath('/') && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-brand-primary rounded-full" />}
-            </NavLink>
-            <NavLink to="/movies" className="flex items-center space-x-2 px-4 py-2 rounded-xl hover:bg-surface-secondary/60 transition-all duration-200 relative">
-              <Grid3X3 className="w-4 h-4" />
-              <span className="font-medium">Movies</span>
-              {isActivePath('/movies') && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-brand-primary rounded-full" />}
-            </NavLink>
+          <nav className="hidden items-center gap-1 rounded-full border border-[#1B2238] bg-[#131A2E]/90 p-1 min-[641px]:flex" aria-label="Main navigation">
+            {NAV_ITEMS.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                aria-current={isActivePath(to) ? 'page' : undefined}
+                className={`nav-link ui-interactive flex min-h-9 items-center rounded-full px-5 text-sm font-semibold ${
+                  isActivePath(to)
+                    ? 'bg-[#FFC933] text-[#0A0E1A]'
+                    : 'text-[#B9C1D9]'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
           </nav>
 
-          {/* Enhanced Search Bar */}
-          <div className="hidden sm:block flex-1 max-w-lg mx-8 relative" ref={searchRef}>
-            <form onSubmit={handleSearch} className="relative">
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-tertiary group-focus-within:text-brand-primary transition-colors duration-200" />
-                {isSearching && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4">
-                    <div className="absolute inset-0 rounded-full border-2 border-surface-tertiary" />
-                    <div className="absolute inset-0 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
-                  </div>
-                )}
-                <input
-                  type="text"
-                  placeholder="Search movies, actors, directors..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onFocus={() => setShowSearchDropdown(true)}
-                  className="w-full pl-12 pr-12 py-2.5 bg-surface-secondary/70 border border-surface-tertiary/60 rounded-xl 
-                           text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-primary/70 
-                           focus:ring-2 focus:ring-brand-primary/15 focus:bg-surface-secondary transition-all duration-200
-                           backdrop-blur-sm shadow-sm hover:border-surface-interactive"
-                />
-              </div>
-            </form>
-
-            {/* Search Dropdown */}
+          <div className="hidden w-[190px] justify-self-end min-[1025px]:w-[210px] min-[641px]:block">
+            {renderSearchField(desktopInputRef)}
             {showSearchDropdown && (
-              <div 
-                ref={searchDropdownRef}
-                className="absolute top-full left-0 right-0 mt-2 bg-surface-secondary/95 backdrop-blur-xl border border-surface-tertiary/50 
-                         rounded-xl shadow-2xl max-h-96 overflow-y-auto z-50 animate-fade-in"
-              >
-                {/* Search Results */}
+              <div ref={searchDropdownRef} className="absolute right-[max(16px,calc((100vw-1280px)/2))] top-[calc(100%-2px)] z-50 mt-2 max-h-96 w-[min(360px,calc(100vw-32px))] overflow-y-auto rounded-2xl border border-[#232C48] bg-[#131A2E] p-2 shadow-2xl">
                 {searchQuery.length >= 2 && (
-                  <div className="p-2">
-                    {isSearching ? (
-                      <div className="flex items-center justify-center py-8 gap-3">
-                        <div className="relative w-6 h-6">
-                          <div className="absolute inset-0 rounded-full border-2 border-surface-tertiary" />
-                          <div className="absolute inset-0 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
-                          </div>
-                        </div>
-                        <span className="text-text-secondary">Searching...</span>
-                      </div>
-                    ) : searchResults.length > 0 ? (
-                      <>
-                        <div className="px-3 py-2 text-xs font-semibold text-text-tertiary uppercase tracking-wide">
-                          Search Results
-                        </div>
-                        {searchResults.map((movie) => (
-                          <button
-                            key={movie.id}
-                            onClick={() => handleMovieSelect(movie)}
-                            className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-surface-tertiary/50 
-                                     transition-colors duration-200 text-left group"
-                          >
-                            <div className="flex-shrink-0 w-12 h-16 bg-surface-tertiary rounded-md overflow-hidden">
-                              {movie.poster_path ? (
-                                <img
-                                  src={tmdbAPI.getPosterUrl(movie.poster_path, 'w154')}
-                                  alt={movie.title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-tertiary to-surface-secondary">
-                                  <Film className="w-6 h-6 text-text-tertiary" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-text-primary truncate group-hover:text-brand-primary transition-colors duration-200">
-                                {movie.title}
-                              </p>
-                              <p className="text-sm text-text-secondary truncate">
-                                {movie.release_date ? new Date(movie.release_date).getFullYear() : 'TBA'}
-                                {movie.vote_average > 0 && (
-                                  <span className="ml-2">★ {movie.vote_average.toFixed(1)}</span>
-                                )}
-                              </p>
-                            </div>
-                          </button>
-                        ))}
-                        <button
-                          onClick={() => executeSearch(searchQuery)}
-                          className="w-full mt-2 p-3 text-center text-brand-primary hover:bg-surface-tertiary/50 
-                                   rounded-lg transition-colors duration-200 font-medium"
-                        >
-                          View all results for "{searchQuery}"
+                  isSearching ? (
+                    <p className="p-5 text-center text-sm text-[#9AA4BF]">Searching...</p>
+                  ) : searchResults.length ? (
+                    <>
+                      {searchResults.map((movie) => (
+                        <button key={movie.id} type="button" onClick={() => handleMovieSelect(movie)} className="header-search-result ui-interactive flex min-h-14 w-full items-center gap-3 rounded-xl p-2 text-left">
+                          <span className="flex h-12 w-9 shrink-0 items-center justify-center overflow-hidden rounded bg-[#0E1424]">
+                            {movie.poster_path ? (
+                              <img src={tmdbAPI.getPosterUrl(movie.poster_path, 'w92')} alt="" className="h-full w-full object-cover" />
+                            ) : <Film className="h-4 w-4 text-[#9AA4BF]" />}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium text-[#F4F6FB]">{movie.title}</span>
+                            <span className="block text-xs text-[#9AA4BF]">{movie.release_date?.slice(0, 4) || 'TBA'}</span>
+                          </span>
                         </button>
-                      </>
-                    ) : searchQuery.length >= 2 ? (
-                      <div className="p-8 text-center text-text-secondary">
-                        <Search className="w-12 h-12 mx-auto mb-3 text-text-tertiary" />
-                        <p>No movies found for "{searchQuery}"</p>
-                        <p className="text-sm mt-1">Try a different search term</p>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
-
-                {/* Recent Searches */}
-                {searchQuery.length < 2 && recentSearches.length > 0 && (
-                  <div className="p-2 border-t border-surface-tertiary/30">
-                    <div className="flex items-center justify-between px-3 py-2">
-                      <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wide">
-                        Recent Searches
-                      </span>
-                      <button
-                        onClick={clearRecentSearches}
-                        className="text-xs text-text-tertiary hover:text-text-secondary transition-colors duration-200"
-                      >
-                        Clear
+                      ))}
+                      <button type="button" onClick={() => executeSearch(searchQuery)} className="header-search-result ui-interactive flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-[#FFC933]">
+                        View all results <CornerDownLeft className="h-4 w-4" />
                       </button>
+                    </>
+                  ) : <p className="p-5 text-center text-sm text-[#9AA4BF]">No movies found</p>
+                )}
+                {searchQuery.length < 2 && recentSearches.length > 0 && (
+                  <>
+                    <div className="flex items-center justify-between px-3 py-2 text-xs text-[#9AA4BF]">
+                      <span>Recent searches</span>
+                      <button type="button" onClick={clearRecentSearches} className="header-search-clear ui-interactive min-h-8 px-2">Clear</button>
                     </div>
-                    {recentSearches.map((search, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleRecentSearchSelect(search)}
-                        className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-surface-tertiary/50 
-                                 transition-colors duration-200 text-left group"
-                      >
-                        <Clock className="w-4 h-4 text-text-tertiary group-hover:text-brand-primary transition-colors duration-200" />
-                        <span className="text-text-secondary group-hover:text-text-primary transition-colors duration-200">
-                          {search}
-                        </span>
+                    {recentSearches.map((search) => (
+                      <button key={search} type="button" onClick={() => executeSearch(search)} className="header-search-result ui-interactive flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-sm text-[#F4F6FB]">
+                        <Clock className="h-4 w-4 text-[#9AA4BF]" />{search}
                       </button>
                     ))}
-                  </div>
-                )}
-
-                {/* Quick Actions */}
-                {searchQuery.length < 2 && (
-                  <div className="p-2 border-t border-surface-tertiary/30">
-                    <div className="px-3 py-2 text-xs font-semibold text-text-tertiary uppercase tracking-wide">
-                      Quick Actions
-                    </div>
-                    <Link
-                      to="/movies?sort=trending"
-                      className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-surface-tertiary/50 
-                               transition-colors duration-200 text-left group"
-                      onClick={() => setShowSearchDropdown(false)}
-                    >
-                      <TrendingUp className="w-4 h-4 text-text-tertiary group-hover:text-brand-primary transition-colors duration-200" />
-                      <span className="text-text-secondary group-hover:text-text-primary transition-colors duration-200">
-                        Trending Movies
-                      </span>
-                    </Link>
-                  </div>
+                  </>
                 )}
               </div>
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-2 min-[641px]:hidden">
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-xl hover:bg-surface-secondary/50 transition-all duration-200 
-                       focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+              type="button"
+              onClick={() => { setIsMobileSearchOpen((open) => !open); setIsMenuOpen(false); }}
+              className="mobile-nav-button ui-interactive flex h-11 w-11 items-center justify-center rounded-full border border-[#1B2238] bg-[#131A2E] text-[#F4F6FB]"
+              aria-label={isMobileSearchOpen ? 'Close search' : 'Open search'}
+              aria-expanded={isMobileSearchOpen}
             >
-              {isMenuOpen ? (
-                <X className="w-6 h-6 text-text-primary" />
-              ) : (
-                <Menu className="w-6 h-6 text-text-primary" />
-              )}
+              {isMobileSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsMenuOpen((open) => !open); setIsMobileSearchOpen(false); }}
+              className="mobile-nav-button ui-interactive flex h-11 w-11 items-center justify-center rounded-full border border-[#1B2238] bg-[#131A2E] text-[#F4F6FB]"
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMenuOpen}
+            >
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
-
-        {/* Mobile Search Bar */}
-        <div className="sm:hidden pb-4">
-          <form onSubmit={handleSearch} className="relative">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-tertiary group-focus-within:text-brand-primary transition-colors duration-200" />
-              <input
-                type="text"
-                placeholder="Search movies..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full pl-12 pr-4 py-3 bg-surface-secondary/80 border border-surface-tertiary/50 rounded-xl 
-                         text-text-primary placeholder-text-muted focus:outline-none focus:border-brand-primary 
-                         focus:ring-2 focus:ring-brand-primary/20 transition-all duration-200"
-              />
-            </div>
-          </form>
-        </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-surface-secondary/95 backdrop-blur-xl border-t border-surface-tertiary/50 animate-slide-down">
-          <nav className="container mx-auto px-4 py-4 space-y-2">
-            <NavLink 
-              to="/" 
-              className="flex items-center space-x-3 py-3 px-4 rounded-xl hover:bg-surface-tertiary/50 transition-all duration-200 group"
-            >
-              <Home className="w-5 h-5 group-hover:text-brand-primary transition-colors duration-200" />
-              <span>Home</span>
-            </NavLink>
-            <NavLink 
-              to="/movies" 
-              className="flex items-center space-x-3 py-3 px-4 rounded-xl hover:bg-surface-tertiary/50 transition-all duration-200 group"
-            >
-              <Grid3X3 className="w-5 h-5 group-hover:text-brand-primary transition-colors duration-200" />
-              <span>Movies</span>
-            </NavLink>
-          </nav>
+      {isMobileSearchOpen && (
+        <div className="border-t border-[#1B2238] bg-[#0A0E1A] px-4 py-3 min-[641px]:hidden">
+          {renderSearchField(mobileInputRef)}
+          {showSearchDropdown && searchQuery.length >= 2 && (
+            <div className="mt-2 max-h-72 overflow-y-auto rounded-2xl border border-[#232C48] bg-[#131A2E] p-2">
+              {isSearching ? <p className="p-4 text-center text-sm text-[#9AA4BF]">Searching...</p> : searchResults.map((movie) => (
+                <button key={movie.id} type="button" onClick={() => handleMovieSelect(movie)} className="header-search-result ui-interactive flex min-h-14 w-full items-center gap-3 rounded-xl p-2 text-left">
+                  <span className="flex h-12 w-9 items-center justify-center overflow-hidden rounded bg-[#0E1424]">
+                    {movie.poster_path && <img src={tmdbAPI.getPosterUrl(movie.poster_path, 'w92')} alt="" className="h-full w-full object-cover" />}
+                  </span>
+                  <span className="truncate text-sm text-[#F4F6FB]">{movie.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+      )}
+
+      {isMenuOpen && (
+        <nav className="border-t border-[#1B2238] bg-[#0A0E1A] p-3 min-[641px]:hidden" aria-label="Mobile navigation">
+          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              aria-current={isActivePath(to) ? 'page' : undefined}
+              className={`mobile-menu-link ui-interactive flex min-h-11 items-center gap-3 rounded-xl px-4 font-medium ${
+                isActivePath(to) ? 'bg-[#FFC933] text-[#0A0E1A]' : 'text-[#B9C1D9]'
+              }`}
+            >
+              <Icon className="h-5 w-5" />{label}
+            </Link>
+          ))}
+        </nav>
       )}
     </header>
   );

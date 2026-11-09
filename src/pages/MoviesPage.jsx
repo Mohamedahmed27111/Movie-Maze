@@ -1,16 +1,14 @@
 // ✅ Enhanced MoviesPage.jsx - Improved Responsive Design & UX
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMovies } from '../contexts/MovieContext';
 import MovieGrid from '../components/movie/MovieGrid';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import Pagination from '../components/common/Pagination';
 import { 
   Grid, 
   List, 
   ChevronDown, 
-  Heart, 
-  Bookmark, 
-  User, 
   X,
   Search,
   Sliders
@@ -47,7 +45,7 @@ const MoviesPage = () => {
     sortBy: searchParams.get('sortBy') || 'popularity.desc',
     page: parseInt(searchParams.get('page')) || 1,
     minRating: searchParams.get('minRating') || '',
-    language: searchParams.get('language') || 'en'
+    language: searchParams.get('language') || ''
   });
 
   const [viewMode, setViewMode] = useState('grid');
@@ -76,6 +74,7 @@ const MoviesPage = () => {
   ];
 
   const languages = [
+    { value: '', label: 'All Languages', flag: '🌍' },
     { value: 'en', label: 'English', flag: '🇺🇸' },
     { value: 'es', label: 'Spanish', flag: '🇪🇸' },
     { value: 'fr', label: 'French', flag: '🇫🇷' },
@@ -139,14 +138,17 @@ const MoviesPage = () => {
     try {
       setApiError(null);
       
-      if (filters.genre || filters.year || filters.minRating || filters.language !== 'en' || filters.sortBy !== 'popularity.desc') {
+      if (filters.genre || filters.year || filters.minRating || filters.language || filters.sortBy !== 'popularity.desc') {
         const discoverParams = {
           page: filters.page,
           sortBy: filters.sortBy,
           year: filters.year,
-          language: filters.language,
           minRating: filters.minRating
         };
+
+        if (filters.language) {
+          discoverParams.with_original_language = filters.language;
+        }
 
         if (filters.genre) {
           discoverParams.genres = [filters.genre];
@@ -205,7 +207,7 @@ const MoviesPage = () => {
   // Get active movies with proper error handling
   const getActiveMovies = () => {
     try {
-      if (filters.genre || filters.year || filters.minRating || filters.language !== 'en' || filters.sortBy !== 'popularity.desc') {
+      if (filters.genre || filters.year || filters.minRating || filters.language || filters.sortBy !== 'popularity.desc') {
         return searchResults?.movies || [];
       }
 
@@ -226,7 +228,7 @@ const MoviesPage = () => {
   // Get movies metadata with proper error handling
   const getMoviesMetadata = () => {
     try {
-      if (filters.genre || filters.year || filters.minRating || filters.language !== 'en' || filters.sortBy !== 'popularity.desc') {
+      if (filters.genre || filters.year || filters.minRating || filters.language || filters.sortBy !== 'popularity.desc') {
         return searchResults || { totalPages: 0, totalResults: 0 };
       }
 
@@ -245,52 +247,49 @@ const MoviesPage = () => {
   };
 
   // Toggle favorite (using localStorage instead of Firebase)
-  const toggleFavorite = async (movie) => {
+  const toggleFavorite = useCallback(async (movie) => {
     if (!user) return;
-    
+
     try {
-      const newFavorites = new Set(favoriteMovies);
-      
-      if (favoriteMovies.has(movie.id)) {
-        newFavorites.delete(movie.id);
-      } else {
-        newFavorites.add(movie.id);
-      }
-      
-      setFavoriteMovies(newFavorites);
-      
-      // Save to localStorage
-      localStorage.setItem(`favorites_${user.id}`, JSON.stringify([...newFavorites]));
-      
+      // Functional update so the callback identity stays stable across renders.
+      setFavoriteMovies((prev) => {
+        const next = new Set(prev);
+        if (next.has(movie.id)) next.delete(movie.id);
+        else next.add(movie.id);
+        try {
+          localStorage.setItem(`favorites_${user.id}`, JSON.stringify([...next]));
+        } catch {
+          /* storage unavailable */
+        }
+        return next;
+      });
     } catch (error) {
       console.error('Error toggling favorite:', error);
       setApiError('Failed to update favorites. Please try again.');
     }
-  };
+  }, [user]);
 
   // Toggle watchlist (using localStorage instead of Firebase)
-  const toggleWatchlist = async (movie) => {
+  const toggleWatchlist = useCallback(async (movie) => {
     if (!user) return;
-    
+
     try {
-      const newWatchlist = new Set(watchlist);
-      
-      if (watchlist.has(movie.id)) {
-        newWatchlist.delete(movie.id);
-      } else {
-        newWatchlist.add(movie.id);
-      }
-      
-      setWatchlist(newWatchlist);
-      
-      // Save to localStorage
-      localStorage.setItem(`watchlist_${user.id}`, JSON.stringify([...newWatchlist]));
-      
+      setWatchlist((prev) => {
+        const next = new Set(prev);
+        if (next.has(movie.id)) next.delete(movie.id);
+        else next.add(movie.id);
+        try {
+          localStorage.setItem(`watchlist_${user.id}`, JSON.stringify([...next]));
+        } catch {
+          /* storage unavailable */
+        }
+        return next;
+      });
     } catch (error) {
       console.error('Error toggling watchlist:', error);
       setApiError('Failed to update watchlist. Please try again.');
     }
-  };
+  }, [user]);
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
@@ -321,7 +320,7 @@ const MoviesPage = () => {
       sortBy: 'popularity.desc',
       page: 1,
       minRating: '',
-      language: 'en'
+      language: ''
     });
   };
 
@@ -349,13 +348,18 @@ const MoviesPage = () => {
   const activeMovies = getActiveMovies();
   const moviesMetadata = getMoviesMetadata();
 
-  const enhancedMovies = activeMovies.map(movie => ({
-    ...movie,
-    isFavorite: favoriteMovies.has(movie.id),
-    isInWatchlist: watchlist.has(movie.id),
-    onToggleFavorite: () => toggleFavorite(movie),
-    onToggleWatchlist: () => toggleWatchlist(movie)
-  }));
+  // Memoised so cards aren't re-rendered on unrelated state changes (filters, loading flags…).
+  const enhancedMovies = useMemo(
+    () =>
+      activeMovies.map((movie) => ({
+        ...movie,
+        isFavorite: favoriteMovies.has(movie.id),
+        isInWatchlist: watchlist.has(movie.id),
+        onToggleFavorite: () => toggleFavorite(movie),
+        onToggleWatchlist: () => toggleWatchlist(movie)
+      })),
+    [activeMovies, favoriteMovies, watchlist, toggleFavorite, toggleWatchlist]
+  );
 
   // Get active filters count for display
   const getActiveFiltersCount = () => {
@@ -363,7 +367,7 @@ const MoviesPage = () => {
     if (filters.genre) count++;
     if (filters.year) count++;
     if (filters.minRating) count++;
-    if (filters.language !== 'en') count++;
+    if (filters.language) count++;
     if (filters.sortBy !== 'popularity.desc') count++;
     if (filters.category !== 'popular') count++;
     return count;
@@ -384,11 +388,12 @@ const MoviesPage = () => {
         </p>
         {onDismiss && (
           <button
+            type="button"
             onClick={onDismiss}
-            className={`flex-shrink-0 p-1 rounded-full hover:bg-opacity-20 transition-colors ${
+            className={`ui-interactive flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${
               type === 'error' 
-                ? 'text-red-400 hover:bg-red-500' 
-                : 'text-green-400 hover:bg-green-500'
+                ? 'error-dismiss text-red-400'
+                : 'success-dismiss text-green-400'
             }`}
           >
             <X className="w-4 h-4" />
@@ -399,8 +404,8 @@ const MoviesPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-surface-primary via-surface-primary to-surface-secondary">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+    <div className="movies-page min-h-screen bg-[#0A0E1A]">
+      <div className="page-container py-8 sm:py-10">
         
         {/* Error Messages */}
         {(error || apiError) && (
@@ -412,103 +417,63 @@ const MoviesPage = () => {
         )}
 
         {/* Enhanced Header Section */}
-        <div className="mb-8 sm:mb-12">
-          {/* Main Header */}
-          <div className="text-center sm:text-left mb-6 sm:mb-8">
-            <div className="relative">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-brand-primary via-yellow-400 to-orange-500 bg-clip-text text-transparent mb-3 sm:mb-4">
-                Discover Movies
-              </h1>
-              <div className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 text-2xl sm:text-4xl animate-pulse">
-                🎬
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-center sm:justify-start gap-2 sm:gap-6 text-text-secondary">
-              <div className="flex items-center justify-center sm:justify-start gap-2">
-                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-                <p className="text-sm sm:text-base lg:text-lg">
-                  {moviesMetadata?.totalResults ? 
-                    `${moviesMetadata.totalResults.toLocaleString()} movies found` : 
-                    'Explore our vast collection'
-                  }
-                </p>
-              </div>
-              
-              {user && (
-                <div className="flex items-center justify-center sm:justify-start gap-2 text-text-secondary/80">
-                  <User className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="text-sm sm:text-base truncate max-w-48">
-                    Welcome, {user.displayName || user.email}
-                  </span>
-                </div>
-              )}
-            </div>
+        <div className="mb-6 sm:mb-8">
+          <div className="mb-5">
+            <h1 className="mb-2 text-3xl font-bold tracking-tight text-[#FFC933] sm:text-4xl">
+              Discover Movies
+            </h1>
+            <p className="flex items-center gap-2 text-sm text-[#9AA4BF] sm:text-base">
+              <Search className="h-4 w-4" aria-hidden="true" />
+              {`${(moviesMetadata?.totalResults || 0).toLocaleString()} movies found`}
+            </p>
           </div>
 
-          {/* Enhanced Control Bar */}
-          <div className="bg-surface-secondary/40 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-surface-tertiary/30 shadow-lg">
-            <div className="flex flex-col lg:flex-row  lg:justify-between gap-4 lg:gap-6">
-              
-              {/* User Stats & View Mode - Mobile: Stack, Desktop: Row */}
-              <div className="flex flex-col sm:flex-row  gap-4 sm:gap-6">
-                {/* User Stats */}
-                {user && !isLoadingUserData && (
-                  <div className="flex sm:justify-start gap-4 sm:gap-6">
-                    <div className="flex items-center gap-2 bg-red-500/10 rounded-full px-3 py-1.5 border border-red-500/20">
-                      <Heart className="w-4 h-4 text-red-500" />
-                      <span className="text-sm font-semibold text-red-400">{favoriteMovies.size}</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-blue-500/10 rounded-full px-3 py-1.5 border border-blue-500/20">
-                      <Bookmark className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm font-semibold text-blue-400">{watchlist.size}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* View Mode Toggle */}
-                <div className="flex  justify-start">
-                  <div className="flex bg-surface-tertiary rounded-xl p-1 border border-surface-interactive/30">
+          <div className="filter-toolbar">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex rounded-full bg-[#0A0E1A] p-1" role="group" aria-label="Movie view mode">
                     <button
+                      type="button"
                       onClick={() => handleViewModeChange('grid')}
-                      className={`flex  gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all duration-200 ${
-                        viewMode === 'grid' 
-                          ? 'bg-brand-primary text-surface-primary shadow-lg scale-105' 
-                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary'
+                      aria-pressed={viewMode === 'grid'}
+                      className={`ui-interactive ui-button flex min-h-11 items-center gap-2 rounded-full px-4 ${
+                        viewMode === 'grid'
+                          ? 'ui-segment-active bg-[#FFC933] text-[#0A0E1A]'
+                          : 'ui-secondary-button text-[#9AA4BF]'
                       }`}
                     >
-                      <Grid className="w-4 h-4" />
-                      <span className="text-sm font-medium hidden sm:inline">Grid</span>
+                      <Grid className="h-4 w-4" aria-hidden="true" />
+                      <span className="text-sm font-semibold">Grid</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleViewModeChange('list')}
-                      className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all duration-200 ${
-                        viewMode === 'list' 
-                          ? 'bg-brand-primary text-surface-primary shadow-lg scale-105' 
-                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary'
+                      aria-pressed={viewMode === 'list'}
+                      className={`ui-interactive ui-button flex min-h-11 items-center gap-2 rounded-full px-4 ${
+                        viewMode === 'list'
+                          ? 'ui-segment-active bg-[#FFC933] text-[#0A0E1A]'
+                          : 'ui-secondary-button text-[#9AA4BF]'
                       }`}
                     >
-                      <List className="w-4 h-4" />
-                      <span className="text-sm font-medium hidden sm:inline">List</span>
+                      <List className="h-4 w-4" aria-hidden="true" />
+                      <span className="text-sm font-semibold">List</span>
                     </button>
-                  </div>
-                </div>
               </div>
 
-              {/* Filter Toggle Button */}
               <button
+                type="button"
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center justify-center gap-3 bg-gradient-to-r from-brand-primary to-yellow-500 hover:from-yellow-500 hover:to-brand-primary text-surface-primary px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden group"
+                aria-expanded={showFilters}
+                aria-controls="movie-filters"
+                className="ui-interactive ui-button ui-primary-button flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#FFC933] px-5 font-semibold text-[#0A0E1A]"
               >
-                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
-                <Sliders className="w-5 h-5" />
+                <Sliders className="h-4 w-4" aria-hidden="true" />
                 <span>Filters</span>
                 {getActiveFiltersCount() > 0 && (
-                  <span className="bg-white/20 text-xs px-2 py-1 rounded-full">
+                  <span className="rounded-full bg-[#0A0E1A]/15 px-2 py-0.5 text-xs">
                     {getActiveFiltersCount()}
                   </span>
                 )}
-                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -517,7 +482,7 @@ const MoviesPage = () => {
        
 {/* Mobile Responsive Filters Panel */}
 {showFilters && (
-  <div className="bg-surface-secondary rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+  <div id="movie-filters" className="filter-panel mb-6 sm:mb-8">
     {/* Filters Grid - Responsive layout */}
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
       {/* Category Filter */}
@@ -528,7 +493,7 @@ const MoviesPage = () => {
         <select
           value={filters.category}
           onChange={(e) => handleFilterChange('category', e.target.value)}
-          className="w-full bg-surface-tertiary text-text-primary border border-surface-interactive rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-brand-primary text-sm sm:text-base"
+          className="design-select"
         >
           {categories.map(category => (
             <option key={category.value} value={category.value}>
@@ -546,7 +511,7 @@ const MoviesPage = () => {
         <select
           value={filters.genre}
           onChange={(e) => handleFilterChange('genre', e.target.value)}
-          className="w-full bg-surface-tertiary text-text-primary border border-surface-interactive rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-brand-primary text-sm sm:text-base"
+          className="design-select"
         >
           <option value="">All Genres</option>
           {genres?.map(genre => (
@@ -565,7 +530,7 @@ const MoviesPage = () => {
         <select
           value={filters.year}
           onChange={(e) => handleFilterChange('year', e.target.value)}
-          className="w-full bg-surface-tertiary text-text-primary border border-surface-interactive rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-brand-primary text-sm sm:text-base"
+          className="design-select"
         >
           <option value="">All Years</option>
           {years.map(year => (
@@ -584,7 +549,7 @@ const MoviesPage = () => {
         <select
           value={filters.minRating}
           onChange={(e) => handleFilterChange('minRating', e.target.value)}
-          className="w-full bg-surface-tertiary text-text-primary border border-surface-interactive rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-brand-primary text-sm sm:text-base"
+          className="design-select"
         >
           {ratings.map(rating => (
             <option key={rating.value} value={rating.value}>
@@ -602,7 +567,7 @@ const MoviesPage = () => {
         <select
           value={filters.language}
           onChange={(e) => handleFilterChange('language', e.target.value)}
-          className="w-full bg-surface-tertiary text-text-primary border border-surface-interactive rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-brand-primary text-sm sm:text-base"
+          className="design-select"
         >
           {languages.map(language => (
             <option key={language.value} value={language.value}>
@@ -620,7 +585,7 @@ const MoviesPage = () => {
         <select
           value={filters.sortBy}
           onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-          className="w-full bg-surface-tertiary text-text-primary border border-surface-interactive rounded-lg px-3 py-2.5 sm:py-2 focus:outline-none focus:border-brand-primary text-sm sm:text-base"
+          className="design-select"
         >
           {sortOptions.map(option => (
             <option key={option.value} value={option.value}>
@@ -636,7 +601,7 @@ const MoviesPage = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
         <button
           onClick={clearFilters}
-          className="text-brand-primary hover:text-yellow-500 font-semibold transition-colors text-center sm:text-left text-sm sm:text-base py-2 sm:py-0"
+          className="ui-interactive ui-text-button py-2 text-center text-sm font-semibold text-[#FFC933] sm:py-0 sm:text-left sm:text-base"
         >
           Clear All Filters
         </button>
@@ -644,7 +609,7 @@ const MoviesPage = () => {
         {user && (
           <button
             onClick={saveUserPreferences}
-            className="text-blue-500 hover:text-blue-400 font-semibold transition-colors text-center sm:text-right text-sm sm:text-base py-2 sm:py-0"
+            className="ui-interactive ui-text-button py-2 text-center text-sm font-semibold text-[#FFC933] sm:py-0 sm:text-right sm:text-base"
           >
             Save as Default
           </button>
@@ -670,58 +635,20 @@ const MoviesPage = () => {
               <div className="text-center py-20">
                 <p className="text-text-secondary text-lg">No movies found with current filters.</p>
                 <button
+                  type="button"
                   onClick={clearFilters}
-                  className="mt-4 text-brand-primary hover:text-yellow-500 font-semibold"
+                  className="ui-interactive ui-text-button mt-4 font-semibold text-[#FFC933]"
                 >
                   Clear Filters
                 </button>
               </div>
             )}
             {/* Pagination */}
-            {moviesMetadata?.totalPages > 1 && (
-              <div className="flex items-center justify-center mt-12 gap-2">
-                <button
-                  onClick={() => handlePageChange(filters.page - 1)}
-                  disabled={filters.page === 1}
-                  className="px-4 py-2 rounded-lg bg-surface-secondary text-text-primary disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-tertiary transition-colors"
-                >
-                  Previous
-                </button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, moviesMetadata.totalPages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(
-                      moviesMetadata.totalPages - 4,
-                      filters.page - 2
-                    )) + i;
-                    
-                    if (pageNum > moviesMetadata.totalPages) return null;
-                    
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-2 rounded-lg transition-colors ${
-                          pageNum === filters.page
-                            ? 'bg-brand-primary text-surface-primary'
-                            : 'bg-surface-secondary text-text-primary hover:bg-surface-tertiary'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => handlePageChange(filters.page + 1)}
-                  disabled={filters.page === moviesMetadata.totalPages}
-                  className="px-4 py-2 rounded-lg bg-surface-secondary text-text-primary disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-tertiary transition-colors"
-                >
-                  Next
-                </button>
-              </div>
-            )}
+            <Pagination
+              currentPage={filters.page}
+              totalPages={moviesMetadata?.totalPages || 0}
+              onPageChange={handlePageChange}
+            />
           </>
         )}
       </div>

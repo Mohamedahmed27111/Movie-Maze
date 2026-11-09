@@ -117,15 +117,6 @@ const SearchPage = () => {
 
   // Effect for search query and filter changes
   useEffect(() => {
-    // Update URL params
-    if (debouncedSearchQuery !== searchParams.get('q')) {
-      if (debouncedSearchQuery) {
-        setSearchParams({ q: debouncedSearchQuery });
-      } else {
-        setSearchParams({});
-      }
-    }
-    
     // Perform search/discovery
     searchMoviesFn(debouncedSearchQuery, 1, {
       sortBy,
@@ -133,7 +124,15 @@ const SearchPage = () => {
       minRating,
       releaseYear
     });
-  }, [debouncedSearchQuery, sortBy, selectedGenres, minRating, releaseYear, searchParams, setSearchParams, searchMoviesFn]);
+  }, [debouncedSearchQuery, sortBy, selectedGenres, minRating, releaseYear, searchMoviesFn]);
+
+  // Keep the URL in sync with the debounced query (separate effect so it can't retrigger the search)
+  useEffect(() => {
+    const currentQ = new URLSearchParams(window.location.search).get('q') || '';
+    if (debouncedSearchQuery !== currentQ) {
+      setSearchParams(debouncedSearchQuery ? { q: debouncedSearchQuery } : {}, { replace: true });
+    }
+  }, [debouncedSearchQuery, setSearchParams]);
 
   // Handle load more
   const handleLoadMore = () => {

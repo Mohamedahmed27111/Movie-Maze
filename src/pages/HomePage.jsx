@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import MovieSlider from '../components/movie/MovieSlider';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import SectionHeader from '../components/common/SectionHeader';
+import MovieCard from '../components/movie/MovieCard';
 import GenreBrowser from '../components/home/GenreBrowser';
-import ReviewsSection from '../components/home/ReviewsSection';
-import NewsletterSection from '../components/home/NewsletterSection';
 import HeroSection from '../components/home/HeroSection';
-import { 
-  Star
-} from 'lucide-react';
 import tmdbAPI from '../api/tmdbAPI';
 
 const HomePage = () => {
@@ -34,7 +30,7 @@ const HomePage = () => {
       
       // Fetch all movie categories + genre list concurrently
       const [trendingData, popularData, topRatedData, genreData] = await Promise.all([
-        tmdbAPI.getTrending('movie', 'week'),
+        tmdbAPI.getTrending("movie", "week"),
         tmdbAPI.getPopular(1),
         tmdbAPI.getTopRated(1),
         tmdbAPI.getGenres(),
@@ -171,7 +167,7 @@ const HomePage = () => {
           <p className="text-text-secondary mb-6">{error}</p>
           <button 
             onClick={handleRetry}
-            className="bg-brand-primary text-surface-primary px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors"
+            className="ui-interactive ui-button ui-primary-button rounded-full bg-[#FFC933] px-6 py-3 font-semibold text-[#0A0E1A]"
           >
             Try Again
           </button> 
@@ -181,7 +177,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-surface-primary">
+    <div className="min-h-screen bg-[#0A0E1A]">
       {/* Hero Section */}
       {heroMovies.length > 0 && (
         <HeroSection 
@@ -194,98 +190,69 @@ const HomePage = () => {
       )}
 
       {/* Movie Sections */}
-      <div className="bg-surface-primary pt-16">
-        {/* Trending Movies Section */}
+      <div className="home-sections page-container space-y-10 py-8 sm:py-10">
         {trendingMovies.length > 0 && (
-          <section className="mb-16">
-            <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <Star className="w-6 h-6 text-brand-primary" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-                    Trending Movies
-                  </h2>
+          <section>
+            <SectionHeader title="Top 5 Today" to="/movies?category=trending" />
+            <div className="top-five-grid">
+              {trendingMovies.slice(0, 5).map((movie, index) => (
+                <div key={movie.id} className="top-five-item">
+                  <span className="rank-outline" aria-hidden="true">{index + 1}</span>
+                  <MovieCard movie={movie} />
                 </div>
-                <Link
-                  to="/movies?category=trending"
-                  className="text-brand-primary hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
-                >
-                  View All
-                </Link>
-              </div>
-              <MovieSlider movies={trendingMovies} />
+              ))}
             </div>
           </section>
         )}
 
-        {/* Popular Movies */}
         {popularMovies.length > 0 && (
-          <section className="mb-16">
-            <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <Star className="w-6 h-6 text-brand-primary" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-                    Popular Movies
-                  </h2>
-                </div>
-                <Link
-                  to="/movies?category=popular"
-                  className="text-brand-primary hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
-                >
-                  View All
-                </Link>
-              </div>
-              <MovieSlider movies={popularMovies} />
+          <section>
+            <SectionHeader title="Popular Right Now" to="/movies?category=popular" />
+            <div className="popular-grid">
+              {popularMovies.slice(0, 5).map((movie) => (
+                <MovieCard key={movie.id} movie={movie} />
+              ))}
             </div>
           </section>
         )}
 
-        {/* Top Rated Movies */}
-        {topRatedMovies.length > 0 && (
-          <section className="mb-16">
-            <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <Star className="w-6 h-6 text-brand-primary" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-                    Top Rated
-                  </h2>
-                </div>
-                <Link
-                  to="/movies?category=top_rated"
-                  className="text-brand-primary hover:text-yellow-500 font-semibold transition-colors text-sm md:text-base"
-                >
-                  View All
-                </Link>
-              </div>
-              <MovieSlider movies={topRatedMovies} />
-            </div>
-          </section>
-        )}
+        <div className="home-discovery-grid">
+          {topRatedMovies.length > 0 && (
+            <section className="min-w-0">
+              <SectionHeader title="Top Rated" to="/movies?category=top_rated" />
+              <ol className="leaderboard-panel">
+                {topRatedMovies.slice(0, 5).map((movie, index) => (
+                  <li key={movie.id} className="leaderboard-list-item">
+                    <Link to={`/movie/${movie.id}`} className="leaderboard-row ui-interactive">
+                    <span className="leaderboard-rank">{index + 1}</span>
+                    <span className="leaderboard-poster">
+                      {movie.poster_path ? (
+                        <img
+                          src={tmdbAPI.getPosterUrl(movie.poster_path, 'w92')}
+                          alt={`${movie.title} poster`}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <span className="poster-placeholder flex h-full items-center justify-center px-1 text-center text-[8px] text-[#9AA4BF]">{movie.title}</span>
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="leaderboard-row-title truncate text-sm font-semibold text-[#F4F6FB]">{movie.title}</p>
+                      <p className="text-xs text-[#9AA4BF]">{movie.release_date?.slice(0, 4) || 'TBA'}</p>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold text-[#FFC933]">★ {movie.vote_average?.toFixed(1) || 'N/A'}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
-        {/* Genre Browser Section */}
-        <GenreBrowser 
-          popularMovies={popularMovies}
-          onGenreClick={(genreId) => {
-            navigate(`/movies?genre=${genreId}`);
-          }}
-        />
-
-        {/* Reviews Section */}
-        <ReviewsSection 
-          topRatedMovies={topRatedMovies}
-        />
-
-        {/* Newsletter Section */}
-        <NewsletterSection 
-          onSubscribe={(email) => {
-            console.log('Newsletter subscription:', email);
-            // TODO: Implement newsletter subscription logic with your chosen backend
-            // You could use an API call to your server, a service like Mailchimp, etc.
-          }}
-        />
-
+          <GenreBrowser
+            onGenreClick={(genreId) => navigate(`/movies?genre=${genreId}`)}
+          />
+        </div>
 
         {/* Loading indicator for additional content */}
         {loading && trendingMovies.length > 0 && (
@@ -306,13 +273,13 @@ const HomePage = () => {
             <div className="space-y-4">
               <button
                 onClick={handleLogin}
-                className="w-full bg-brand-primary text-surface-primary py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors"
+                className="ui-interactive ui-button ui-primary-button w-full rounded-full bg-[#FFC933] py-3 font-semibold text-[#0A0E1A]"
               >
                 Mock Sign In (Demo)
               </button>
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="w-full bg-transparent border border-surface-tertiary text-text-primary py-3 rounded-lg hover:bg-surface-tertiary transition-colors"
+                className="ui-interactive ui-button ui-secondary-button w-full rounded-full border border-[#232C48] bg-[#131A2E] py-3 text-[#F4F6FB]"
               >
                 Cancel
               </button>

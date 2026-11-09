@@ -1,6 +1,6 @@
 // pages/MovieDetailsPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import tmdbAPI from '../api/tmdbAPI';
 import { MovieDetailsLoader } from '../components/common/LoadingSpinner';
 import MovieGrid from '../components/movie/MovieGrid';
@@ -11,13 +11,35 @@ import {
   StarIcon,
   CalendarIcon,
   ClockIcon,
-  DollarSignIcon,
   ArrowLeftIcon,
   ShareIcon,
   XIcon,
   LanguagesIcon,
-  TrendingUpIcon
 } from 'lucide-react';
+
+const formatVotes = (count = 0) =>
+  count >= 1000 ? `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(count);
+
+const Avatar = ({ person, className }) => {
+  const url = tmdbAPI.getProfileUrl(person.profile_path);
+  const initials = person.name
+    ?.split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join('')
+    .toUpperCase();
+  return url ? (
+    <img src={url} alt={person.name} loading="lazy" className={className} />
+  ) : (
+    <div
+      role="img"
+      aria-label={`${person.name} photo unavailable`}
+      className={`${className} cast-fallback flex items-center justify-center text-xl font-bold`}
+    >
+      {initials}
+    </div>
+  );
+};
 
 const MovieDetailsPage = () => {
   const { id } = useParams();
@@ -32,7 +54,7 @@ const MovieDetailsPage = () => {
   const [error, setError] = useState(null);
   const [similarMovies, setSimilarMovies] = useState([]);
   const [showTrailer, setShowTrailer] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('cast');
 
   const isFavorite = favorites.includes(parseInt(id));
   const isInWatchlist = watchlist.includes(parseInt(id));
@@ -54,10 +76,11 @@ const MovieDetailsPage = () => {
       const movieData = await tmdbAPI.getMovieDetails(id);
       setMovie(movieData);
       
-      // Fetch similar movies
-      if (movieData.similar?.results) {
-        setSimilarMovies(movieData.similar.results.slice(0, 12));
-      }
+      // Similar movies (already safety-filtered in tmdbAPI); fall back to recommendations
+      const related = movieData.similar?.results?.length
+        ? movieData.similar.results
+        : movieData.recommendations?.results || [];
+      setSimilarMovies(related.slice(0, 12));
     } catch (err) {
       setError('Failed to load movie details. Please try again.');
       console.error('Error fetching movie details:', err);
@@ -129,7 +152,7 @@ const MovieDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="page-container py-8">
         <MovieDetailsLoader />
       </div>
     );
@@ -137,14 +160,14 @@ const MovieDetailsPage = () => {
 
   if (error || !movie) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="page-container py-8">
         <div className="text-center">
-          <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-4">
+          <h2 className="mb-4 text-xl font-bold text-[#F4F6FB] sm:text-2xl">
             {error || 'Movie not found'}
           </h2>
           <button 
             onClick={() => navigate(-1)}
-            className="bg-brand-primary text-surface-primary px-4 sm:px-6 py-2 rounded-lg hover:bg-yellow-500 transition-colors"
+            className="ui-interactive ui-button ui-primary-button min-h-11 rounded-full bg-[#FFC933] px-6 font-semibold text-[#0A0E1A]"
           >
             Go Back
           </button>
@@ -158,246 +181,224 @@ const MovieDetailsPage = () => {
   const posterUrl = tmdbAPI.getPosterUrl(movie.poster_path, 'w500');
 
   return (
-    <div className="min-h-screen bg-surface-primary">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        {/* Backdrop Image */}
+    <div className="details-page min-h-screen bg-[#0A0E1A]">
+      <section className="details-backdrop relative overflow-hidden">
         {backdropUrl && (
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${backdropUrl})` }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-primary via-surface-primary/90 to-surface-primary/60 md:bg-gradient-to-r md:from-surface-primary md:via-surface-primary/95 md:to-surface-primary/70"></div>
-          </div>
+          <img
+            src={backdropUrl}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover opacity-25 blur-2xl"
+          />
         )}
-        
-        {/* Content Overlay */}
-        <div className="relative z-10 container mx-auto px-4 py-6 sm:py-8 lg:py-12">
-          {/* Back Button */}
+        <div className="relative z-10 page-container py-6 sm:py-8 lg:py-12">
           <button 
             onClick={() => navigate(-1)}
-            className="mb-6 sm:mb-8 flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors group"
+            className="ui-interactive ui-text-button mb-6 inline-flex min-h-11 items-center gap-2 rounded-full pr-3 text-sm font-medium text-[#9AA4BF]"
           >
-            <ArrowLeftIcon size={20} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="text-sm sm:text-base font-medium">Back to results</span>
+            <ArrowLeftIcon size={18} />
+            <span>Back</span>
           </button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 items-start gap-6 min-[641px]:grid-cols-[216px_minmax(0,1fr)] min-[641px]:gap-7 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10">
             {/* Poster Section */}
-            <div className="lg:col-span-4 xl:col-span-3">
-              <div className="flex flex-col items-center lg:items-start">
-                {/* Poster Image */}
-                <div className="relative group">
-                  <img
-                    src={posterUrl || '/placeholder-poster.jpg'}
-                    alt={movie.title}
-                    className="w-64 sm:w-72 md:w-80 lg:w-full rounded-xl shadow-2xl transition-transform group-hover:scale-105"
-                  />
-                  {/* Overlay for actions on mobile */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center lg:hidden">
-                    <div className="text-white text-center">
-                      <PlayIcon size={48} className="mx-auto mb-2" />
-                      <p className="text-sm font-medium">View Details</p>
+            <div className="flex justify-center min-[641px]:justify-start">
+                <div className="relative w-40 max-w-full overflow-hidden rounded-2xl border border-[#1B2238] bg-[#131A2E] min-[641px]:w-full">
+                  {posterUrl ? (
+                    <img
+                      src={posterUrl}
+                      alt={movie.title}
+                      loading="eager"
+                      className="block h-auto w-full object-cover"
+                    />
+                  ) : (
+                    <div className="poster-placeholder flex aspect-[2/3] w-full items-center justify-center p-4 text-center text-sm font-semibold text-[#9AA4BF]">
+                      {movie.title}
                     </div>
-                  </div>
+                  )}
                 </div>
-                
-
-              </div>
             </div>
 
             {/* Movie Info Section */}
-            <div className="lg:col-span-8 xl:col-span-9 space-y-6 lg:space-y-8">
+            <div className="min-w-0 space-y-5 text-center min-[641px]:text-left">
               {/* Title and Tagline */}
-              <div className="space-y-3">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-text-primary leading-tight">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#F4F6FB] sm:text-4xl lg:text-5xl">
                   {movie.title}
                 </h1>
                 {movie.tagline && (
-                  <p className="text-lg sm:text-xl lg:text-2xl text-text-secondary font-light italic">
+                  <p className="text-base italic text-[#9AA4BF] sm:text-lg">
                     "{movie.tagline}"
                   </p>
                 )}
               </div>
 
               {/* Rating and Quick Stats */}
-              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+              <div className="flex flex-wrap items-center justify-center gap-2 min-[641px]:justify-start">
                 {/* Rating */}
-                <div className="flex items-center gap-2 bg-surface-secondary/80 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <StarIcon size={20} className="text-brand-primary" fill="currentColor" />
-                  <span className="font-bold text-text-primary text-lg">{movie.vote_average?.toFixed(1)}</span>
-                  <span className="text-text-tertiary text-sm">
-                    ({movie.vote_count ? `${Math.round(movie.vote_count / 1000)}k` : '0'})
+                <div className="flex min-h-10 items-center gap-1.5 rounded-full border border-[#232C48] bg-[#131A2E] px-3 text-sm">
+                  <StarIcon size={15} className="text-[#FFC933]" fill="currentColor" />
+                  <span className="font-semibold text-[#FFC933]">{movie.vote_average?.toFixed(1)}</span>
+                  <span className="text-[#9AA4BF]">
+                    ({formatVotes(movie.vote_count)})
                   </span>
                 </div>
                 
                 {/* Release Date */}
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <CalendarIcon size={18} />
+                <div className="flex min-h-10 items-center gap-1.5 rounded-full border border-[#232C48] bg-[#131A2E] px-3 text-xs text-[#F4F6FB] sm:text-sm">
+                  <CalendarIcon size={15} className="text-[#9AA4BF]" />
                   <span className="font-medium">{tmdbAPI.formatDate(movie.release_date)}</span>
                 </div>
                 
                 {/* Runtime */}
                 {movie.runtime && (
-                  <div className="flex items-center gap-2 text-text-secondary">
-                    <ClockIcon size={18} />
+                  <div className="flex min-h-10 items-center gap-1.5 rounded-full border border-[#232C48] bg-[#131A2E] px-3 text-sm text-[#F4F6FB]">
+                    <ClockIcon size={15} className="text-[#9AA4BF]" />
                     <span className="font-medium">{tmdbAPI.formatRuntime(movie.runtime)}</span>
                   </div>
                 )}
 
                 {/* Language */}
                 {movie.original_language && (
-                  <div className="flex items-center gap-2 text-text-secondary">
-                    <LanguagesIcon size={18} />
+                  <div className="flex min-h-10 items-center gap-1.5 rounded-full border border-[#232C48] bg-[#131A2E] px-3 text-sm text-[#F4F6FB]">
+                    <LanguagesIcon size={15} className="text-[#9AA4BF]" />
                     <span className="font-medium uppercase">{movie.original_language}</span>
                   </div>
                 )}
               </div>
 
               {/* Genres */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap justify-center gap-2 min-[641px]:justify-start">
                 {movie.genres?.map(genre => (
-                  <span 
+                  <Link
                     key={genre.id}
-                    className="px-4 py-2 bg-gradient-to-r from-brand-primary/20 to-brand-accent/20 border border-brand-primary/30 rounded-full text-sm font-medium text-text-primary hover:from-brand-primary/30 hover:to-brand-accent/30 transition-all cursor-pointer"
+                    to={`/movies?genre=${genre.id}`}
+                    className="details-genre ui-interactive flex min-h-9 items-center rounded-full border border-[#6A5424] bg-[#3A2E14] px-3.5 text-sm font-medium text-[#F4D98A]"
                   >
                     {genre.name}
-                  </span>
+                  </Link>
                 ))}
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="grid grid-cols-3 gap-2 min-[641px]:flex min-[641px]:flex-wrap">
                 {trailer && (
                   <button
+                    type="button"
                     onClick={() => setShowTrailer(true)}
-                    className="flex items-center justify-center gap-3 bg-gradient-to-r from-brand-primary to-yellow-500 text-surface-primary px-8 py-4 rounded-xl font-bold text-lg hover:from-yellow-500 hover:to-brand-primary transition-all duration-300 shadow-lg shadow-brand-primary/25 hover:shadow-brand-primary/40 hover:scale-105"
+                    className="ui-interactive ui-button ui-primary-button col-span-3 flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#FFC933] px-4 font-bold text-[#0A0E1A] min-[641px]:col-span-1 min-[641px]:px-6"
                   >
-                    <PlayIcon size={24} />
+                    <PlayIcon size={19} />
                     <span>Watch Trailer</span>
                   </button>
                 )}
                 
                 <button
+                  type="button"
                   onClick={handleShare}
-                  className="flex items-center justify-center gap-3 bg-surface-secondary/80 backdrop-blur-sm text-text-primary px-8 py-4 rounded-xl font-semibold border border-surface-tertiary hover:bg-surface-interactive transition-all duration-200 hover:scale-105"
+                  className="ui-interactive ui-button ui-secondary-button flex min-h-12 items-center justify-center gap-1 rounded-full border border-[#232C48] bg-[#131A2E] px-2 text-xs font-semibold text-[#F4F6FB] sm:gap-2 sm:px-4 sm:text-sm"
                 >
-                  <ShareIcon size={20} />
-                  <span>Share Movie</span>
+                  <ShareIcon size={16} />
+                  <span>Share</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleFavoriteClick}
-                  className={`flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold border transition-all duration-200 hover:scale-105 ${
+                  className={`ui-interactive ui-button ui-secondary-button flex min-h-12 items-center justify-center gap-1 rounded-full border px-2 text-xs font-semibold sm:gap-2 sm:px-4 sm:text-sm ${
                     isFavorite
-                      ? 'bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/30'
-                      : 'bg-surface-secondary/80 backdrop-blur-sm text-text-primary border-surface-tertiary hover:bg-surface-interactive'
+                      ? 'is-selected is-favorite border-red-500/50 bg-red-500/15 text-red-300'
+                      : 'border-[#232C48] bg-[#131A2E] text-[#F4F6FB]'
                   }`}
                 >
-                  <HeartIcon size={20} fill={isFavorite ? 'currentColor' : 'none'} />
-                  <span>{isFavorite ? 'Unfavorite' : 'Favorite'}</span>
+                  <HeartIcon size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+                  <span>Favorite</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleWatchlistClick}
-                  className={`flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold border transition-all duration-200 hover:scale-105 ${
+                  className={`ui-interactive ui-button ui-secondary-button flex min-h-12 items-center justify-center gap-1 rounded-full border px-2 text-xs font-semibold sm:gap-2 sm:px-4 sm:text-sm ${
                     isInWatchlist
-                      ? 'bg-brand-primary/20 border-brand-primary/50 text-brand-primary hover:bg-brand-primary/30'
-                      : 'bg-surface-secondary/80 backdrop-blur-sm text-text-primary border-surface-tertiary hover:bg-surface-interactive'
+                      ? 'is-selected border-[#FFC933]/60 bg-[#FFC933]/10 text-[#FFC933]'
+                      : 'border-[#232C48] bg-[#131A2E] text-[#F4F6FB]'
                   }`}
                 >
-                  <BookmarkIcon size={20} fill={isInWatchlist ? 'currentColor' : 'none'} />
-                  <span>{isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}</span>
+                  <BookmarkIcon size={16} fill={isInWatchlist ? 'currentColor' : 'none'} />
+                  <span>Watchlist</span>
                 </button>
               </div>
-
-              {/* Overview */}
-              <div className="space-y-4">
-                <h2 className="text-2xl sm:text-3xl font-bold text-text-primary">Synopsis</h2>
-                <p className="text-text-secondary leading-relaxed text-base sm:text-lg lg:text-xl font-light">
-                  {movie.overview || 'No overview available for this movie.'}
-                </p>
-              </div>
-
-              {/* Financial Info */}
-              {(movie.budget > 0 || movie.revenue > 0) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {movie.budget > 0 && (
-                    <div className="bg-surface-secondary/50 backdrop-blur-sm rounded-xl p-6 border border-surface-tertiary">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-red-500/20 rounded-lg">
-                          <DollarSignIcon size={24} className="text-red-500" />
-                        </div>
-                        <div>
-                          <p className="text-text-tertiary text-sm font-medium">Production Budget</p>
-                          <p className="text-text-primary text-xl font-bold">
-                            {tmdbAPI.formatCurrency(movie.budget)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {movie.revenue > 0 && (
-                    <div className="bg-surface-secondary/50 backdrop-blur-sm rounded-xl p-6 border border-surface-tertiary">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-green-500/20 rounded-lg">
-                          <TrendingUpIcon size={24} className="text-green-500" />
-                        </div>
-                        <div>
-                          <p className="text-text-tertiary text-sm font-medium">Box Office Revenue</p>
-                          <p className="text-text-primary text-xl font-bold">
-                            {tmdbAPI.formatCurrency(movie.revenue)}
-                          </p>
-                          {movie.budget > 0 && (
-                            <p className="text-green-500 text-sm font-medium">
-                              {((movie.revenue / movie.budget) * 100).toFixed(0)}% ROI
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Production Companies */}
-              {movie.production_companies?.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-text-primary">Production Companies</h3>
-                  <div className="flex flex-wrap gap-4">
-                    {movie.production_companies.slice(0, 4).map(company => (
-                      <div key={company.id} className="flex items-center gap-3 bg-surface-secondary/50 backdrop-blur-sm rounded-lg p-3 border border-surface-tertiary">
-                        {company.logo_path && (
-                          <img
-                            src={`https://image.tmdb.org/t/p/w185${company.logo_path}`}
-                            alt={company.name}
-                            className="h-8 w-auto object-contain"
-                          />
-                        )}
-                        <span className="text-text-secondary text-sm font-medium">{company.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
+
+          <div className="mt-8 space-y-6">
+            <section>
+              <h2 className="mb-2 text-xl font-bold text-[#F4F6FB]">Synopsis</h2>
+              <p className="max-w-5xl text-sm leading-[1.7] text-[#9AA4BF] sm:text-base">
+                {movie.overview || 'No overview available for this movie.'}
+              </p>
+            </section>
+
+            {(movie.budget > 0 || movie.revenue > 0) && (
+              <div className="grid grid-cols-1 gap-3 min-[641px]:grid-cols-2">
+                {movie.budget > 0 && (
+                  <div className="rounded-2xl border border-[#1B2238] bg-[#131A2E] p-5">
+                    <p className="text-sm text-[#9AA4BF]">Production Budget</p>
+                    <p className="mt-1 text-xl font-bold text-[#F4F6FB]">{tmdbAPI.formatCurrency(movie.budget)}</p>
+                  </div>
+                )}
+                {movie.revenue > 0 && (
+                  <div className="rounded-2xl border border-[#1B2238] bg-[#131A2E] p-5">
+                    <p className="text-sm text-[#9AA4BF]">Box Office Revenue</p>
+                    <p className="mt-1 text-xl font-bold text-[#F4F6FB]">{tmdbAPI.formatCurrency(movie.revenue)}</p>
+                    {movie.budget > 0 && (
+                      <p className="mt-1 text-sm font-semibold text-[#4ADE80]">
+                        {(((movie.revenue - movie.budget) / movie.budget) * 100).toFixed(0)}% ROI
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {movie.production_companies?.length > 0 && (
+              <section>
+                <h3 className="mb-3 text-base font-bold text-[#F4F6FB]">Production Companies</h3>
+                <div className="flex flex-wrap gap-2">
+                  {movie.production_companies.slice(0, 4).map((company) => (
+                    <div key={company.id} className="flex min-h-10 items-center gap-2 rounded-full border border-[#1B2238] bg-[#131A2E] px-3 text-xs font-medium text-[#9AA4BF]">
+                      {company.logo_path && (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w185${company.logo_path}`}
+                          alt=""
+                          className="h-6 w-auto max-w-16 object-contain"
+                        />
+                      )}
+                      <span>{company.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Tabs Section */}
-      <div className="container mx-auto px-4 py-8 lg:py-12">
-        <div className="border-b border-surface-tertiary mb-8">
-          <nav className="flex space-x-8 overflow-x-auto">
-            {['overview', 'cast', 'crew'].map((tab) => (
+      <div className="page-container py-8 lg:py-12">
+        <div className="mb-6 border-b border-[#1B2238]">
+          <nav className="flex gap-6" aria-label="Movie credits">
+            {['cast', 'crew'].map((tab) => (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`py-4 px-2 border-b-2 font-semibold text-base capitalize transition-all whitespace-nowrap ${
+                aria-selected={activeTab === tab}
+                role="tab"
+                className={`details-tab ui-interactive min-h-11 border-b-2 px-1 text-sm font-semibold capitalize ${
                   activeTab === tab
-                    ? 'border-brand-primary text-brand-primary'
-                    : 'border-transparent text-text-secondary hover:text-text-primary hover:border-surface-tertiary'
+                    ? 'border-[#FFC933] text-[#FFC933]'
+                    : 'border-transparent text-[#9AA4BF]'
                 }`}
               >
                 {tab}
@@ -409,20 +410,18 @@ const MovieDetailsPage = () => {
         {/* Tab Content */}
         {activeTab === 'cast' && (
           <div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-8">Cast</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+            <h3 className="mb-5 text-xl font-bold text-[#F4F6FB]">Cast</h3>
+            <div className="cast-grid">
               {movie.credits?.cast?.slice(0, 12).map((person) => (
-                <div key={person.id} className="group">
-                  <div className="relative overflow-hidden rounded-xl mb-3">
-                    <img
-                      src={tmdbAPI.getProfileUrl(person.profile_path) || '/placeholder-person.jpg'}
-                      alt={person.name}
-                      className="w-full aspect-square object-cover group-hover:scale-110 transition-transform duration-300"
+                <div key={person.id} className="cast-card group min-w-0">
+                  <div className="cast-photo relative mb-2 aspect-square overflow-hidden rounded-xl border border-[#1B2238] bg-[#131A2E]">
+                    <Avatar
+                      person={person}
+                      className="cast-photo-image h-full w-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
-                  <h4 className="font-semibold text-text-primary text-sm mb-1 line-clamp-2">{person.name}</h4>
-                  <p className="text-text-tertiary text-xs line-clamp-2">{person.character}</p>
+                  <h4 className="cast-name mb-0.5 line-clamp-2 text-xs font-semibold text-[#F4F6FB] sm:text-sm">{person.name}</h4>
+                  <p className="line-clamp-2 text-[11px] text-[#9AA4BF] sm:text-xs">{person.character}</p>
                 </div>
               ))}
             </div>
@@ -431,18 +430,17 @@ const MovieDetailsPage = () => {
 
         {activeTab === 'crew' && (
           <div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-8">Crew</h3>
+            <h3 className="mb-5 text-xl font-bold text-[#F4F6FB]">Crew</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {movie.credits?.crew?.slice(0, 12).map((person) => (
-                <div key={`${person.id}-${person.job}`} className="flex items-center gap-4 bg-surface-secondary/50 rounded-xl p-4 border border-surface-tertiary hover:bg-surface-interactive transition-colors">
-                  <img
-                    src={tmdbAPI.getProfileUrl(person.profile_path) || '/placeholder-person.jpg'}
-                    alt={person.name}
-                    className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                <div key={`${person.id}-${person.job}`} className="crew-card flex items-center gap-4 rounded-2xl border border-[#1B2238] bg-[#131A2E] p-4">
+                  <Avatar
+                    person={person}
+                    className="h-16 w-16 flex-shrink-0 rounded-lg object-cover"
                   />
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-semibold text-text-primary text-sm mb-1 truncate">{person.name}</h4>
-                    <p className="text-text-tertiary text-xs truncate">{person.job}</p>
+                    <h4 className="mb-1 truncate text-sm font-semibold text-[#F4F6FB]">{person.name}</h4>
+                    <p className="truncate text-xs text-[#9AA4BF]">{person.job}</p>
                   </div>
                 </div>
               ))}
@@ -450,33 +448,27 @@ const MovieDetailsPage = () => {
           </div>
         )}
 
-        {activeTab === 'overview' && (
-          <div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-8">Overview</h3>
-            <p className="text-text-secondary leading-relaxed text-base sm:text-lg lg:text-xl font-light">
-              {movie.overview || 'No overview available for this movie.'}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Similar Movies */}
       {similarMovies.length > 0 && (
-        <div className="container mx-auto px-4 py-8 lg:py-12">
-          <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-8">You Might Also Like</h3>
-          <MovieGrid movies={similarMovies} />
+        <div className="page-container py-8 lg:py-12">
+          <h3 className="section-heading mb-5">You Might Also Like</h3>
+          <MovieGrid movies={similarMovies} columns="four" />
         </div>
       )}
 
       {/* Trailer Modal */}
       {showTrailer && trailer && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface-secondary rounded-2xl p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+          <div className="max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-[#232C48] bg-[#131A2E] p-4 sm:p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-text-primary">Watch Trailer</h3>
               <button
+                type="button"
                 onClick={() => setShowTrailer(false)}
-                className="text-text-secondary hover:text-text-primary bg-surface-tertiary hover:bg-surface-interactive rounded-full p-2 transition-colors"
+                aria-label="Close trailer"
+                className="ui-interactive ui-secondary-button flex h-11 w-11 items-center justify-center rounded-full border border-[#232C48] bg-[#0E1424] text-[#9AA4BF]"
               >
                 <XIcon size={24} />
               </button>

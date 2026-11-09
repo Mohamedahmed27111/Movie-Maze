@@ -15,6 +15,9 @@ const formatYear = (dateString) => {
   return new Date(dateString).getFullYear();
 };
 
+const formatVotes = (count) =>
+  count >= 1000 ? `${(count / 1000).toFixed(count >= 10000 ? 0 : 1).replace(/\.0$/, '')}K` : String(count);
+
 const formatRuntime = (minutes) => {
   if (!minutes) return '';
   const hours = Math.floor(minutes / 60);
@@ -22,7 +25,7 @@ const formatRuntime = (minutes) => {
   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 };
 
-const getImageUrl = (path, size = 'original') => {
+const getImageUrl = (path, size = 'w1280') => {
   if (!path) return null;
   return path.startsWith('http') ? path : `https://image.tmdb.org/t/p/${size}${path}`;
 };
@@ -136,7 +139,7 @@ useEffect(() => {
 
   return (
     <div 
-      className="relative h-screen flex flex-col overflow-hidden bg-black"
+      className="relative h-[calc(100svh-8rem)] sm:h-[calc(100svh-4rem)] min-h-[620px] flex flex-col overflow-hidden bg-black"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -194,9 +197,9 @@ useEffect(() => {
                 <div className="flex items-center gap-1 sm:gap-2 bg-yellow-400 text-black px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-xs sm:text-sm">
                   <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
                   <span>{currentMovie.vote_average.toFixed(1)}</span>
-                  {currentMovie.vote_count && (
+                  {currentMovie.vote_count > 0 && (
                     <span className="text-xs hidden sm:inline">
-                      ({Math.floor(currentMovie.vote_count / 1000)}K)
+                      ({formatVotes(currentMovie.vote_count)})
                     </span>
                   )}
                 </div>
@@ -280,11 +283,7 @@ useEffect(() => {
             <div
               ref={carouselRef}
               className="flex gap-3 px-12 overflow-x-auto scrollbar-hide scroll-smooth"
-              style={{ 
-                scrollbarWidth: 'none', 
-                msOverflowStyle: 'none',
-                WebkitScrollbar: { display: 'none' }
-              }}
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {movies.map((movie, index) => (
                 <div
